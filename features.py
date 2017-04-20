@@ -22,23 +22,23 @@ def char_ngrams(input, n):
 
 
 def feature_word_unigrams(text):
-    return text.split()
+    return " ".join(text.split()).split()
 
 
 def feature_word_bigrams(text):
-    return ["_".join(ng) for ng in ngrams(text,2)]
+    return ["_".join(ng) for ng in ngrams(" ".join(text.split()),2)]
 
 
 def feature_char_unigrams(text):
-    return ["".join(ng) for ng in char_ngrams(text, 1)]
+    return ["".join(ng) for ng in char_ngrams(" ".join(text.split()), 1)]
 
 
 def feature_char_bigrams(text):
-    return ["".join(ng) for ng in char_ngrams(text, 2)]
+    return ["".join(ng) for ng in char_ngrams(" ".join(text.split()), 2)]
 
 
 def feature_char_trigrams(text):
-    return ["".join(ng) for ng in char_ngrams(text, 3)]
+    return ["".join(ng) for ng in char_ngrams(" ".join(text.split()), 3)]
 
 
 
@@ -59,6 +59,9 @@ def features(text,tools=list([feature_word_unigrams,
 if __name__=="__main__":
     racism = DataSet("Racism")
 
+
+    from collections import defaultdict
+    all_features = defaultdict(int)
     for tweet in racism.data:
         print(tweet['text'])
         print(features(preprocess(tweet)))
