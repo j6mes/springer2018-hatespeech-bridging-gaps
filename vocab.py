@@ -16,7 +16,12 @@ class Vocab():
             for f in item:
                 self.vocab[f] +=1
 
-
+    def lookup(self,instance):
+        ret = defaultdict(int)
+        for feature in instance.keys():
+            if feature in self.vocab.keys():
+                ret[self.vocab.keys().index(feature)] += 1
+        return ret
 if __name__ == "__main__":
     racism = DataSet("racism")
     racism_features = []
@@ -39,4 +44,3 @@ if __name__ == "__main__":
     vocab.add(sexism_features)
     vocab.add(neither_features)
 
-    print(vocab.vocab)
