@@ -17,6 +17,9 @@ if __name__=="__main__":
     racism = DataSet("Racism")
     print(len(racism.data))
 
+    for tweet in racism.data:
+        print(tweet['text'])
+
 
     neither = DataSet("neither")
     print(len(neither.data))
