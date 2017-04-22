@@ -29,7 +29,7 @@ class CompositeDataset():
     def _import(self,target,class_name,data,ff,pf):
         target[class_name] = []
 
-        for item in tqdm(data):
+        for item in tqdm(data,desc="Generating features for " + class_name):
             target[class_name].append(ff(pf(item)))
 
     def get_num_classes(self):
