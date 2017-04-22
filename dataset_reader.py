@@ -1,9 +1,11 @@
 from pprint import pprint
 import json
+import random
 
 class DataSet():
+    r = random.Random(12343)
 
-    def __init__(self,name,base_dir ="data/",ext="json",lines=True):
+    def __init__(self,name,base_dir ="data/",ext="json",lines=True,train=0.8,dev=0.1):
         with open(base_dir+name+"."+ext,"r") as f:
             if lines:
                 self.data = []
@@ -12,26 +14,20 @@ class DataSet():
             else:
                 self.data = json.load(f)
 
+        self.r.shuffle(self.data)
+
+        splits = int(len(self.data) * train), int(len(self.data) * (train+dev))
+        self.train, self.dev, self.test = self.data[:splits[0]], self.data[splits[0]:splits[1]], self.data[splits[1]:]
+
+
+
+
 
 if __name__=="__main__":
     racism = DataSet("racism_overlapfree")
-    splits = int(len(racism.data) * 0.8), int(len(racism.data) * 0.9)
-    train, dev, test = racism.data[:splits[0]], racism.data[splits[0]:splits[1]], racism.data[splits[1]:]
-    print(len(racism.data), len(train), len(dev), len(test))
-
-    # for tweet in racism.data:
-    #     print(tweet['text'])
-
     neither = DataSet("neither_overlapfree")
-    splits = int(len(neither.data) * 0.8), int(len(neither.data) * 0.9)
-    train, dev, test = neither.data[:splits[0]], neither.data[splits[0]:splits[1]], neither.data[splits[1]:]
-    print(len(neither.data), len(train), len(dev), len(test))
-
-
     sexism = DataSet("sexism_overlapfree")
-    splits = int(len(sexism.data) * 0.8), int(len(sexism.data) * 0.9), int(len(sexism.data) * 0.1)
-    train, dev, test = sexism.data[:splits[0]], sexism.data[splits[0]:splits[1]], sexism.data[splits[1]:]
-    print(len(sexism.data), len(train), len(dev), len(test))
+
 
     # Read Expert annotations
     expert = DataSet('amateur_expert')
