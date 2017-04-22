@@ -10,19 +10,19 @@ def ngrams(input, n):
   input = input.split(' ')
   output = []
   for i in range(len(input)-n+1):
-    output.append(input[i:i+n])
+    output.append("WORD_"+input[i:i+n])
   return output
 
 
 def char_ngrams(input, n):
   output = []
   for i in range(len(input)-n+1):
-    output.append(input[i:i+n])
+    output.append("CHARS_"+input[i:i+n])
   return output
 
 
 def feature_word_unigrams(text):
-    return " ".join(text.split()).split()
+    return ["WORD_"+ w for w in " ".join(text.split()).split()]
 
 
 def feature_word_bigrams(text):

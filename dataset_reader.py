@@ -21,8 +21,6 @@ class DataSet():
 
 
 
-
-
 if __name__=="__main__":
     racism = DataSet("racism_overlapfree")
     neither = DataSet("neither_overlapfree")

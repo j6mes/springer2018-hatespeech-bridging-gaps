@@ -9,25 +9,35 @@ from preprocessing import preprocess
 
 class Vocab():
     def __init__(self):
-        self.vocab = defaultdict(int)
+        self.vocab = set()
+        self.vocab.add("UNKNOWN")
 
     def add(self,all_items):
         for item in tqdm(all_items):
             for f in item:
-                self.vocab[f] +=1
+                self.vocab.add(f)
+
+    def generate_dict(self):
+        vocab = dict()
+        for i,word in enumerate(self.vocab):
+            vocab[word] = i
+        self.vocab = vocab
 
     def lookup(self,instance):
         ret = defaultdict(int)
-        for feature in instance.keys():
-            if feature in self.vocab.keys():
-                ret[self.vocab.keys().index(feature)] += 1
+        for feature in instance:
+            if feature in self.vocab:
+                ret[self.vocab[feature]] += 1
+            else:
+                ret[self.vocab["UNKNOWN"]] += 1
         return ret
+
+
 if __name__ == "__main__":
     racism = DataSet("racism")
     racism_features = []
     for tweet in tqdm(racism.data):
         racism_features.append(features(preprocess(tweet)))
-
 
     sexism = DataSet("sexism")
     sexism_features = []
