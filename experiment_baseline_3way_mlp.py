@@ -5,6 +5,9 @@ import tensorflow as tf
 from dataset_reader import DataSet
 from composite_dataset import CompositeDataset
 
+np.random.seed(1)
+tf.set_random_seed(1)
+
 
 def onehot(vals):
     return (np.arange(num_classes)[:] == np.array(vals)[:, None]).astype(np.float32)
@@ -55,6 +58,8 @@ hidden_size = 20
 graph = tf.Graph()
 
 with graph.as_default():
+    tf.set_random_seed(1)
+
     global_step = tf.Variable(0)
     learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
 
