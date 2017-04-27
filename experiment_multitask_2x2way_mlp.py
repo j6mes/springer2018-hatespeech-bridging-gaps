@@ -8,6 +8,7 @@ import util
 
 np.random.seed(1)
 
+
 def onehot(vals):
     return (np.arange(num_classes)[:] == np.array(vals)[:, None]).astype(np.float32)
 
@@ -21,8 +22,6 @@ def bow(vals):
             arr[idx, key] = val[key]
 
     return arr
-
-
 
 
 racism = DataSet("racism_overlapfree")
@@ -88,165 +87,218 @@ patience = 3
 
 graph = tf.Graph()
 
-with graph.as_default():
-    tf.set_random_seed(1)
 
-    global_step = tf.Variable(0)
-    learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
+def create_model(args):
+    return MTLModel(args)
 
-    train_data = tf.placeholder(tf.float32, [batch_size, num_feats])
-    train_labels_racism = tf.placeholder(tf.float32, [batch_size, 2])
-    train_labels_sexism = tf.placeholder(tf.float32, [batch_size, 2])
-    # train_labels_neither = tf.placeholder(tf.float32, [batch_size, 2])
 
-    dev_racism_data = tf.constant(X_racism_dev.astype(np.float32))
-    test_racism_data = tf.constant(X_racism_test.astype(np.float32))
+class MTLModel:
 
-    dev_sexism_data = tf.constant(X_sexism_dev.astype(np.float32))
-    test_sexism_data = tf.constant(X_sexism_test.astype(np.float32))
+    def __init__(self, args):
+        self.train_ops = {}
+        self.dev_predict_ops = {}
+        self.dev_loss_ops = {}
+        self.test_predict_ops = {}
+        self.train_inputs = {}
+        self.train_labels = {}
+        self.train_loss_ops = {}
+        self.train_predict_ops = {}
 
-    weights1 = tf.Variable(tf.truncated_normal([num_feats, hidden_size]))
-    biases1 = tf.Variable(tf.zeros([hidden_size]))
+        tf.set_random_seed(1)
 
-    weights_racism = tf.Variable(tf.truncated_normal([hidden_size, 2]))
-    biases_racism = tf.Variable(tf.zeros([2]))
+        global_step = tf.Variable(0)
+        learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
 
-    weights_sexism = tf.Variable(tf.truncated_normal([hidden_size, 2]))
-    biases_sexism = tf.Variable(tf.zeros([2]))
+        train_data = tf.placeholder(tf.float32, [batch_size, num_feats])
+        train_labels_racism = tf.placeholder(tf.float32, [batch_size, 2])
+        train_labels_sexism = tf.placeholder(tf.float32, [batch_size, 2])
+        # train_labels_neither = tf.placeholder(tf.float32, [batch_size, 2])
 
-    weights_neither = tf.Variable(tf.truncated_normal([hidden_size, 2]))
-    biases_neither = tf.Variable(tf.zeros([2]))
+        dev_racism_data = tf.constant(X_racism_dev.astype(np.float32))
+        test_racism_data = tf.constant(X_racism_test.astype(np.float32))
 
-    layer1 = tf.nn.relu(tf.add(tf.matmul(train_data, weights1), biases1))
+        dev_sexism_data = tf.constant(X_sexism_dev.astype(np.float32))
+        test_sexism_data = tf.constant(X_sexism_test.astype(np.float32))
 
-    racism_logits = tf.add(tf.matmul(layer1, weights_racism), biases_racism)
-    racism_loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(labels=train_labels_racism, logits=racism_logits)) + l2_lambda * (
-    tf.nn.l2_loss(weights1) + tf.nn.l2_loss(biases1) + tf.nn.l2_loss(weights_racism) + tf.nn.l2_loss(biases_racism))
-    racism_optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(racism_loss, global_step=global_step)
+        weights1 = tf.Variable(tf.truncated_normal([num_feats, hidden_size]))
+        biases1 = tf.Variable(tf.zeros([hidden_size]))
 
-    sexism_logits = tf.add(tf.matmul(layer1, weights_racism), biases_racism)
-    sexism_loss = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(labels=train_labels_sexism, logits=sexism_logits)) + l2_lambda * (
-    tf.nn.l2_loss(weights1) + tf.nn.l2_loss(biases1) + tf.nn.l2_loss(weights_sexism) + tf.nn.l2_loss(biases_sexism))
-    sexism_optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(sexism_loss, global_step=global_step)
+        weights_racism = tf.Variable(tf.truncated_normal([hidden_size, 2]))
+        biases_racism = tf.Variable(tf.zeros([2]))
 
-    # neither_logits = tf.add(tf.matmul(layer1,weights_neither),biases_neither)
-    # neither_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=train_labels_neither, logits=neither_logits)) + l2_lambda * (tf.nn.l2_loss(weights1) + tf.nn.l2_loss(biases1) + tf.nn.l2_loss(weights_neither) + tf.nn.l2_loss(biases_neither))
-    # neither_optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(neither_loss,global_step=global_step)
+        weights_sexism = tf.Variable(tf.truncated_normal([hidden_size, 2]))
+        biases_sexism = tf.Variable(tf.zeros([2]))
 
-    racism_prediction = tf.nn.softmax(racism_logits)
-    sexism_prediction = tf.nn.softmax(sexism_logits)
-    # neither_prediction = tf.nn.softmax(neither_logits)
+        weights_neither = tf.Variable(tf.truncated_normal([hidden_size, 2]))
+        biases_neither = tf.Variable(tf.zeros([2]))
 
-    ####################################
-    # ####### OPS FOR TEST DATA ###### #
-    ####################################
-    test_sexism_prediction = tf.nn.softmax(
-        tf.add(tf.matmul(
-            tf.nn.relu(tf.add(tf.matmul(test_sexism_data, weights1), biases1)),
-            weights_sexism),
-               biases_sexism))
-    test_racism_prediction = tf.nn.softmax(
-        tf.add(tf.matmul(
-            tf.nn.relu(tf.add(tf.matmul(test_racism_data, weights1), biases1)),
-            weights_racism),
-               biases_racism))
+        layer1 = tf.nn.relu(tf.add(tf.matmul(train_data, weights1), biases1))
 
-    ####################################
-    # ####### OPS FOR DEV DATA ####### #
-    ####################################
-    dev_sexism_logits = tf.add(tf.matmul(
-        tf.nn.relu(tf.add(tf.matmul(dev_sexism_data, weights1), biases1)),
-        weights_sexism), biases_sexism)
-    dev_sexism_prediction = tf.nn.softmax(dev_sexism_logits)
-    dev_sexism_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=dev_sexism_logits, labels=y_sexism_dev
-    ))
-    dev_racism_logits = tf.add(tf.matmul(
-        tf.nn.relu(tf.add(tf.matmul(dev_racism_data, weights1), biases1)),
-        weights_racism), biases_racism)
-    dev_racism_prediction = tf.nn.softmax(dev_racism_logits)
-    dev_racism_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=dev_racism_logits, labels=y_racism_dev
-    ))
+        racism_logits = tf.add(tf.matmul(layer1, weights_racism), biases_racism)
+        racism_loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(labels=train_labels_racism, logits=racism_logits)) + l2_lambda * (
+        tf.nn.l2_loss(weights1) + tf.nn.l2_loss(biases1) + tf.nn.l2_loss(weights_racism) + tf.nn.l2_loss(biases_racism))
+        racism_optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(racism_loss, global_step=global_step)
 
-    ####################################
-    # ###### TRAINING SETTINGS ####### #
-    ####################################
-    num_epochs = 30
-    num_steps = (y_racism_train.shape[0] + y_sexism_train.shape[0]) // batch_size
-    print(num_steps)
+        sexism_logits = tf.add(tf.matmul(layer1, weights_racism), biases_racism)
+        sexism_loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(labels=train_labels_sexism, logits=sexism_logits)) + l2_lambda * (
+        tf.nn.l2_loss(weights1) + tf.nn.l2_loss(biases1) + tf.nn.l2_loss(weights_sexism) + tf.nn.l2_loss(biases_sexism))
+        sexism_optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(sexism_loss, global_step=global_step)
 
-    def accuracy(predictions, labels):
-        return (np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) /
-                predictions.shape[0] * 100.0)
+        # neither_logits = tf.add(tf.matmul(layer1,weights_neither),biases_neither)
+        # neither_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=train_labels_neither, logits=neither_logits)) + l2_lambda * (tf.nn.l2_loss(weights1) + tf.nn.l2_loss(biases1) + tf.nn.l2_loss(weights_neither) + tf.nn.l2_loss(biases_neither))
+        # neither_optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(neither_loss,global_step=global_step)
 
-    ####################################
-    # ########## TRAINING ############ #
-    ####################################
-    task = 0
-    with tf.Session(graph=graph) as session:
-        tf.global_variables_initializer().run()
-        early_stopping_curve = []
-        for epoch in range(1, num_epochs+1):
-            if util.early_stopping(early_stopping_curve, patience,
-                                   lower_is_better=True):
-                print("Ending training due to early stop criterion. Optimal"
-                      "performance reached at epoch {}".format(epoch-patience))
-                break
-            print("<<< EPOCH {} >>>".format(epoch))
-            racism_step = 0
-            sexism_step = 0
-            X_racism_train, y_racism_train = \
-                util.shuffle_data(X_racism_train, y_racism_train)
-            X_sexism_train, y_sexism_train = \
-                util.shuffle_data(X_sexism_train, y_sexism_train)
-            l = 0
-            epoch_stop_criterion = []
-            for step in range(num_steps):
-                if task % 2 == 0:
-                    # Racism
+        racism_prediction = tf.nn.softmax(racism_logits)
+        sexism_prediction = tf.nn.softmax(sexism_logits)
+        # neither_prediction = tf.nn.softmax(neither_logits)
 
-                    offset = (racism_step * batch_size) % (y_racism_train.shape[0] - batch_size)
+        ####################################
+        # ####### OPS FOR TEST DATA ###### #
+        ####################################
+        test_sexism_prediction = tf.nn.softmax(
+            tf.add(tf.matmul(
+                tf.nn.relu(tf.add(tf.matmul(test_sexism_data, weights1), biases1)),
+                weights_sexism),
+                   biases_sexism))
+        test_racism_prediction = tf.nn.softmax(
+            tf.add(tf.matmul(
+                tf.nn.relu(tf.add(tf.matmul(test_racism_data, weights1), biases1)),
+                weights_racism),
+                   biases_racism))
 
-                    batch_data = X_racism_train[offset:(offset + batch_size)]
-                    batch_labels = y_racism_train[offset:(offset + batch_size), :]
+        ####################################
+        # ####### OPS FOR DEV DATA ####### #
+        ####################################
+        dev_sexism_logits = tf.add(tf.matmul(
+            tf.nn.relu(tf.add(tf.matmul(dev_sexism_data, weights1), biases1)),
+            weights_sexism), biases_sexism)
+        dev_sexism_prediction = tf.nn.softmax(dev_sexism_logits)
+        dev_sexism_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            logits=dev_sexism_logits, labels=y_sexism_dev
+        ))
+        dev_racism_logits = tf.add(tf.matmul(
+            tf.nn.relu(tf.add(tf.matmul(dev_racism_data, weights1), biases1)),
+            weights_racism), biases_racism)
+        dev_racism_prediction = tf.nn.softmax(dev_racism_logits)
+        dev_racism_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            logits=dev_racism_logits, labels=y_racism_dev
+        ))
+        self.train_ops["racism"] = racism_optimizer
+        self.train_ops["sexism"] = sexism_optimizer
+        self.train_loss_ops["racism"] = racism_loss
+        self.train_loss_ops["sexism"] = sexism_loss
+        self.train_predict_ops["racism"] = racism_prediction
+        self.train_predict_ops["sexism"] = sexism_prediction
+        self.dev_predict_ops["racism"] = dev_racism_prediction
+        self.dev_predict_ops["sexism"] = dev_sexism_prediction
+        self.test_predict_ops["racism"] = test_racism_prediction
+        self.test_predict_ops["sexism"] = test_sexism_prediction
+        self.train_inputs["racism"] = racism_data
+        self.train_inputs["sexism"] = sexism_data
+        self.train_labels["racism"] = train_labels_racism
+        self.train_labels["sexism"] = train_labels_sexism
+        self.dev_loss_ops["racism"] = dev_racism_loss
+        self.dev_loss_ops["sexism"] = dev_sexism_loss
 
-                    feed_dict = {train_data: batch_data, train_labels_racism: batch_labels}
-                    _, l, predictions = session.run([racism_optimizer, racism_loss, racism_prediction], feed_dict=feed_dict)
+    def step(self, session, task, inputs, y=None, mode="train"):
+        if mode == "train":
+            return session.run([self.train_ops[task], self.train_loss_ops[task],
+                                self.train_predict_ops[task]],
+                               feed_dict={self.train_inputs[task]: inputs,
+                                          self.train_labels[task]: y})
+        elif mode == "predict-dev":
+            return session.run([self.dev_loss_ops[task],
+                                self.dev_predict_ops[task]])
+        elif mode == "predict-test":
+            return session.run(self.test_predict_ops[task])
+        else:
+            print("Mode {} not permitted. Possible values are 'train', "
+                  "'predict-dev' and 'predict-test'".format(mode))
 
-                    if racism_step % 100 == 0:
-                        print("Racism Minibatch loss at step %d: %f" % (step, l))
-                        print("Racism Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
 
-                        print("Racism VALIDATION accuracy: %.1f%%" % accuracy(dev_racism_prediction.eval(), y_racism_dev))
+####################################
+# ###### TRAINING SETTINGS ####### #
+####################################
+num_epochs = 30
+num_steps = (y_racism_train.shape[0] + y_sexism_train.shape[0]) // batch_size
+print(num_steps)
 
-                    racism_step += 1
+####################################
+# ########## TRAINING ############ #
+####################################
+task = 0
+args = {}  # TODO provide hyperparams
+model = create_model(args)
+with tf.Session(graph=graph) as session:
+    tf.global_variables_initializer().run()
+    early_stopping_curve = []
 
-                elif task % 2 == 1:
-                    # Sexism
+    for epoch in range(1, num_epochs+1):
+        if util.early_stopping(early_stopping_curve, patience,
+                               lower_is_better=True):
+            print("Ending training due to early stop criterion. Optimal "
+                  "performance reached at epoch {}".format(epoch-patience))
+            break
+        print("<<< EPOCH {} >>>".format(epoch))
+        racism_step = 0
+        sexism_step = 0
+        X_racism_train, y_racism_train = \
+            util.shuffle_data(X_racism_train, y_racism_train)
+        X_sexism_train, y_sexism_train = \
+            util.shuffle_data(X_sexism_train, y_sexism_train)
+        l = 0
+        epoch_stop_criterion = []
+        dev_loss = 0
+        for step in range(num_steps):
+            if task % 2 == 0:
+                # Racism
 
-                    offset = (sexism_step * batch_size) % (y_sexism_train.shape[0] - batch_size)
+                offset = (racism_step * batch_size) % (y_racism_train.shape[0] - batch_size)
 
-                    batch_data = X_sexism_train[offset:(offset + batch_size)]
-                    batch_labels = y_sexism_train[offset:(offset + batch_size), :]
+                batch_data = X_racism_train[offset:(offset + batch_size)]
+                batch_labels = y_racism_train[offset:(offset + batch_size), :]
 
-                    feed_dict = {train_data: batch_data, train_labels_sexism: batch_labels}
-                    _, l, predictions = session.run([sexism_optimizer, sexism_loss, sexism_prediction], feed_dict=feed_dict)
+                _, l, predictions = model.step(session, "racism", batch_data, batch_labels)
+                dev_loss, dev_predictions = model.step(session, "racism", None, mode="predict-dev")
 
-                    if sexism_step % 100 == 0:
-                        print("Sexism Minibatch loss at step %d: %f" % (step, l))
-                        print("Sexism Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
+                if racism_step % 100 == 0:
+                    print("Racism Minibatch loss at step %d: %f" % (step, l))
+                    print("Racism Minibatch accuracy: %.1f%%" % util.accuracy(predictions, batch_labels))
+                    print("Racism VALIDATION accuracy: %.1f%%" % util.accuracy(dev_predictions, y_racism_dev))
 
-                        print("Sexism VALIDATION accuracy: %.1f%%" % accuracy(dev_sexism_prediction.eval(), y_sexism_dev))
+                racism_step += 1
 
-                    sexism_step += 1
-                # END STEP
-                epoch_stop_criterion.append(dev_sexism_loss.eval() + dev_racism_loss.eval())
-                task += 1
-            # END EPOCH
-            early_stopping_curve.append(np.array(epoch_stop_criterion).mean())
+            elif task % 2 == 1:
+                # Sexism
 
-        print("FINAL Racism TEST accuracy: %.1f%%" % accuracy(test_racism_prediction.eval(), y_racism_test))
-        print("FINAL Sexism TEST accuracy: %.1f%%" % accuracy(test_sexism_prediction.eval(), y_sexism_test))
+                offset = (sexism_step * batch_size) % (y_sexism_train.shape[0] - batch_size)
+
+                batch_data = X_sexism_train[offset:(offset + batch_size)]
+                batch_labels = y_sexism_train[offset:(offset + batch_size), :]
+
+                _, l, predictions = model.step(session, "sexism", batch_data,
+                                               batch_labels)
+                dev_loss, dev_predictions = model.step(session, "sexism", None,
+                                             mode="predict-dev")
+
+                if sexism_step % 100 == 0:
+                    print("Sexism Minibatch loss at step %d: %f" % (step, l))
+                    print("Sexism Minibatch accuracy: %.1f%%" % util.accuracy(predictions, batch_labels))
+
+                    print("Sexism VALIDATION accuracy: %.1f%%" % util.accuracy(dev_predictions, y_sexism_dev))
+
+                sexism_step += 1
+            # END STEP
+            epoch_stop_criterion.append(dev_loss)
+            task += 1
+        # END EPOCH
+        early_stopping_curve.append(np.array(epoch_stop_criterion).mean())
+
+    test_racism_prediction = model.step(session, "racism", None,
+                                        mode="predict-test")
+    test_sexism_prediction = model.step(session, "sexism", None,
+                                        mode="predict-test")
+    print("FINAL Racism TEST accuracy: %.1f%%" % util.accuracy(test_racism_prediction, y_racism_test))
+    print("FINAL Sexism TEST accuracy: %.1f%%" % util.accuracy(test_sexism_prediction, y_sexism_test))

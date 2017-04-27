@@ -19,3 +19,8 @@ def early_stopping(curve, patience=3, lower_is_better=True):
     print(curve, best(curve), curve[-patience:])
     return True
 
+
+def accuracy(predictions, labels):
+    return (np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) /
+            predictions.shape[0] * 100.0)
+
