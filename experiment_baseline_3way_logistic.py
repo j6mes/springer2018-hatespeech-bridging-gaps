@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import tensorflow as tf
-
+import util
 from dataset_reader import DataSet
 from composite_dataset import CompositeDataset
 
@@ -55,7 +55,7 @@ l2_lambda = 1e-5
 graph = tf.Graph()
 
 with graph.as_default():
-    tf.set_random_seed(1)
+    tf.set_random_seed(5)
 
     global_step = tf.Variable(0)
     learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
@@ -91,6 +91,7 @@ with tf.Session(graph=graph) as session:
     tf.global_variables_initializer().run()
     for epoch in range(1, num_epochs + 1):
         print("<<< EPOCH {} >>>".format(epoch))
+        X_train, y_train = util.shuffle_data(X_train, y_train)
         for step in range(num_steps):
             offset = (step * batch_size) % (y_train.shape[0] - batch_size)
 

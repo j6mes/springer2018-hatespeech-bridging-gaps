@@ -84,6 +84,7 @@ batch_size = 50
 l2_lambda = 1e-3
 
 hidden_size = 20
+patience = 3
 
 graph = tf.Graph()
 
@@ -138,39 +139,71 @@ with graph.as_default():
     sexism_prediction = tf.nn.softmax(sexism_logits)
     # neither_prediction = tf.nn.softmax(neither_logits)
 
-    dev_racism_prediction = tf.nn.softmax(
-        tf.add(tf.matmul(tf.nn.relu(tf.add(tf.matmul(dev_racism_data, weights1), biases1)), weights_racism),
-               biases_racism))
-    test_racism_prediction = tf.nn.softmax(
-        tf.add(tf.matmul(tf.nn.relu(tf.add(tf.matmul(test_racism_data, weights1), biases1)), weights_racism),
-               biases_racism))
-
-    dev_sexism_prediction = tf.nn.softmax(
-        tf.add(tf.matmul(tf.nn.relu(tf.add(tf.matmul(dev_sexism_data, weights1), biases1)), weights_sexism),
-               biases_sexism))
+    ####################################
+    # ####### OPS FOR TEST DATA ###### #
+    ####################################
     test_sexism_prediction = tf.nn.softmax(
-        tf.add(tf.matmul(tf.nn.relu(tf.add(tf.matmul(test_sexism_data, weights1), biases1)), weights_sexism),
+        tf.add(tf.matmul(
+            tf.nn.relu(tf.add(tf.matmul(test_sexism_data, weights1), biases1)),
+            weights_sexism),
                biases_sexism))
+    test_racism_prediction = tf.nn.softmax(
+        tf.add(tf.matmul(
+            tf.nn.relu(tf.add(tf.matmul(test_racism_data, weights1), biases1)),
+            weights_racism),
+               biases_racism))
 
+    ####################################
+    # ####### OPS FOR DEV DATA ####### #
+    ####################################
+    dev_sexism_logits = tf.add(tf.matmul(
+        tf.nn.relu(tf.add(tf.matmul(dev_sexism_data, weights1), biases1)),
+        weights_sexism), biases_sexism)
+    dev_sexism_prediction = tf.nn.softmax(dev_sexism_logits)
+    dev_sexism_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+        logits=dev_sexism_logits, labels=y_sexism_dev
+    ))
+    dev_racism_logits = tf.add(tf.matmul(
+        tf.nn.relu(tf.add(tf.matmul(dev_racism_data, weights1), biases1)),
+        weights_racism), biases_racism)
+    dev_racism_prediction = tf.nn.softmax(dev_racism_logits)
+    dev_racism_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+        logits=dev_racism_logits, labels=y_racism_dev
+    ))
+
+    ####################################
+    # ###### TRAINING SETTINGS ####### #
+    ####################################
     num_epochs = 30
     num_steps = (y_racism_train.shape[0] + y_sexism_train.shape[0]) // batch_size
     print(num_steps)
 
-
     def accuracy(predictions, labels):
-        return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
+        return (np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) /
+                predictions.shape[0] * 100.0)
 
-
+    ####################################
+    # ########## TRAINING ############ #
+    ####################################
     task = 0
     with tf.Session(graph=graph) as session:
         tf.global_variables_initializer().run()
-
+        early_stopping_curve = []
         for epoch in range(1, num_epochs+1):
+            if util.early_stopping(early_stopping_curve, patience,
+                                   lower_is_better=True):
+                print("Ending training due to early stop criterion. Optimal"
+                      "performance reached at epoch {}".format(epoch-patience))
+                break
             print("<<< EPOCH {} >>>".format(epoch))
             racism_step = 0
             sexism_step = 0
             X_racism_train, y_racism_train = \
                 util.shuffle_data(X_racism_train, y_racism_train)
+            X_sexism_train, y_sexism_train = \
+                util.shuffle_data(X_sexism_train, y_sexism_train)
+            l = 0
+            epoch_stop_criterion = []
             for step in range(num_steps):
                 if task % 2 == 0:
                     # Racism
@@ -209,8 +242,11 @@ with graph.as_default():
                         print("Sexism VALIDATION accuracy: %.1f%%" % accuracy(dev_sexism_prediction.eval(), y_sexism_dev))
 
                     sexism_step += 1
-
+                # END STEP
+                epoch_stop_criterion.append(dev_sexism_loss.eval() + dev_racism_loss.eval())
                 task += 1
+            # END EPOCH
+            early_stopping_curve.append(np.array(epoch_stop_criterion).mean())
 
         print("FINAL Racism TEST accuracy: %.1f%%" % accuracy(test_racism_prediction.eval(), y_racism_test))
         print("FINAL Sexism TEST accuracy: %.1f%%" % accuracy(test_sexism_prediction.eval(), y_sexism_test))

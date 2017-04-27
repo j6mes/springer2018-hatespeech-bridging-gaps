@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import tensorflow as tf
-
+import util
 from dataset_reader import DataSet
 from composite_dataset import CompositeDataset
 
@@ -101,6 +101,7 @@ with tf.Session(graph=graph) as session:
     tf.global_variables_initializer().run()
     for epoch in range(1, num_epochs + 1):
         print("<<< EPOCH {} >>>".format(epoch))
+        X_train, y_train = util.shuffle_data(X_train, y_train)
         for step in range(num_steps):
             offset = (step * batch_size) % (y_train.shape[0] - batch_size)
 
