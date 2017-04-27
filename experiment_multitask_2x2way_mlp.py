@@ -109,7 +109,7 @@ class MTLModel:
         global_step = tf.Variable(0)
         learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
 
-        train_data = tf.placeholder(tf.float32, [batch_size, num_feats])
+        self.train_data = tf.placeholder(tf.float32, [batch_size, num_feats])
         train_labels_racism = tf.placeholder(tf.float32, [batch_size, 2])
         train_labels_sexism = tf.placeholder(tf.float32, [batch_size, 2])
         # train_labels_neither = tf.placeholder(tf.float32, [batch_size, 2])
@@ -132,7 +132,7 @@ class MTLModel:
         weights_neither = tf.Variable(tf.truncated_normal([hidden_size, 2]))
         biases_neither = tf.Variable(tf.zeros([2]))
 
-        layer1 = tf.nn.relu(tf.add(tf.matmul(train_data, weights1), biases1))
+        layer1 = tf.nn.relu(tf.add(tf.matmul(self.train_data, weights1), biases1))
 
         racism_logits = tf.add(tf.matmul(layer1, weights_racism), biases_racism)
         racism_loss = tf.reduce_mean(
@@ -195,8 +195,8 @@ class MTLModel:
         self.dev_predict_ops["sexism"] = dev_sexism_prediction
         self.test_predict_ops["racism"] = test_racism_prediction
         self.test_predict_ops["sexism"] = test_sexism_prediction
-        self.train_inputs["racism"] = racism_data
-        self.train_inputs["sexism"] = sexism_data
+        # self.train_inputs["racism"] = racism_data
+        # self.train_inputs["sexism"] = sexism_data
         self.train_labels["racism"] = train_labels_racism
         self.train_labels["sexism"] = train_labels_sexism
         self.dev_loss_ops["racism"] = dev_racism_loss
@@ -206,7 +206,7 @@ class MTLModel:
         if mode == "train":
             return session.run([self.train_ops[task], self.train_loss_ops[task],
                                 self.train_predict_ops[task]],
-                               feed_dict={self.train_inputs[task]: inputs,
+                               feed_dict={self.train_data: inputs,
                                           self.train_labels[task]: y})
         elif mode == "predict-dev":
             return session.run([self.dev_loss_ops[task],
@@ -231,7 +231,7 @@ print(num_steps)
 task = 0
 args = {}  # TODO provide hyperparams
 model = create_model(args)
-with tf.Session(graph=graph) as session:
+with tf.Session() as session:
     tf.global_variables_initializer().run()
     early_stopping_curve = []
 
