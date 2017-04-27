@@ -4,6 +4,7 @@ import tensorflow as tf
 
 from dataset_reader import DataSet
 from composite_dataset import CompositeDataset
+import util
 
 np.random.seed(1)
 
@@ -20,6 +21,8 @@ def bow(vals):
             arr[idx, key] = val[key]
 
     return arr
+
+
 
 
 racism = DataSet("racism_overlapfree")
@@ -150,7 +153,7 @@ with graph.as_default():
                biases_sexism))
 
     num_epochs = 30
-    num_steps = (y_racism_train.shape[0] + y_sexism_train.shape[0]) * num_epochs // batch_size
+    num_steps = (y_racism_train.shape[0] + y_sexism_train.shape[0]) // batch_size
     print(num_steps)
 
 
@@ -162,48 +165,52 @@ with graph.as_default():
     with tf.Session(graph=graph) as session:
         tf.global_variables_initializer().run()
 
-        racism_step = 0
-        sexism_step = 0
-        for step in range(num_steps):
-            if task % 2 == 0:
-                # Racism
+        for epoch in range(1, num_epochs+1):
+            print("<<< EPOCH {} >>>".format(epoch))
+            racism_step = 0
+            sexism_step = 0
+            X_racism_train, y_racism_train = \
+                util.shuffle_data(X_racism_train, y_racism_train)
+            for step in range(num_steps):
+                if task % 2 == 0:
+                    # Racism
 
-                offset = (racism_step * batch_size) % (y_racism_train.shape[0] - batch_size)
+                    offset = (racism_step * batch_size) % (y_racism_train.shape[0] - batch_size)
 
-                batch_data = X_racism_train[offset:(offset + batch_size)]
-                batch_labels = y_racism_train[offset:(offset + batch_size), :]
+                    batch_data = X_racism_train[offset:(offset + batch_size)]
+                    batch_labels = y_racism_train[offset:(offset + batch_size), :]
 
-                feed_dict = {train_data: batch_data, train_labels_racism: batch_labels}
-                _, l, predictions = session.run([racism_optimizer, racism_loss, racism_prediction], feed_dict=feed_dict)
+                    feed_dict = {train_data: batch_data, train_labels_racism: batch_labels}
+                    _, l, predictions = session.run([racism_optimizer, racism_loss, racism_prediction], feed_dict=feed_dict)
 
-                if racism_step % 100 == 0:
-                    print("Racism Minibatch loss at step %d: %f" % (step, l))
-                    print("Racism Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
+                    if racism_step % 100 == 0:
+                        print("Racism Minibatch loss at step %d: %f" % (step, l))
+                        print("Racism Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
 
-                    print("Racism VALIDATION accuracy: %.1f%%" % accuracy(dev_racism_prediction.eval(), y_racism_dev))
+                        print("Racism VALIDATION accuracy: %.1f%%" % accuracy(dev_racism_prediction.eval(), y_racism_dev))
 
-                racism_step += 1
+                    racism_step += 1
 
-            elif task % 2 == 1:
-                # Sexism
+                elif task % 2 == 1:
+                    # Sexism
 
-                offset = (sexism_step * batch_size) % (y_sexism_train.shape[0] - batch_size)
+                    offset = (sexism_step * batch_size) % (y_sexism_train.shape[0] - batch_size)
 
-                batch_data = X_sexism_train[offset:(offset + batch_size)]
-                batch_labels = y_sexism_train[offset:(offset + batch_size), :]
+                    batch_data = X_sexism_train[offset:(offset + batch_size)]
+                    batch_labels = y_sexism_train[offset:(offset + batch_size), :]
 
-                feed_dict = {train_data: batch_data, train_labels_sexism: batch_labels}
-                _, l, predictions = session.run([sexism_optimizer, sexism_loss, sexism_prediction], feed_dict=feed_dict)
+                    feed_dict = {train_data: batch_data, train_labels_sexism: batch_labels}
+                    _, l, predictions = session.run([sexism_optimizer, sexism_loss, sexism_prediction], feed_dict=feed_dict)
 
-                if sexism_step % 100 == 0:
-                    print("Sexism Minibatch loss at step %d: %f" % (step, l))
-                    print("Sexism Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
+                    if sexism_step % 100 == 0:
+                        print("Sexism Minibatch loss at step %d: %f" % (step, l))
+                        print("Sexism Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
 
-                    print("Sexism VALIDATION accuracy: %.1f%%" % accuracy(dev_sexism_prediction.eval(), y_sexism_dev))
+                        print("Sexism VALIDATION accuracy: %.1f%%" % accuracy(dev_sexism_prediction.eval(), y_sexism_dev))
 
-                sexism_step += 1
+                    sexism_step += 1
 
-            task += 1
+                task += 1
 
         print("FINAL Racism TEST accuracy: %.1f%%" % accuracy(test_racism_prediction.eval(), y_racism_test))
         print("FINAL Sexism TEST accuracy: %.1f%%" % accuracy(test_sexism_prediction.eval(), y_sexism_test))

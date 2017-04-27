@@ -80,7 +80,7 @@ with graph.as_default():
     test_prediction = tf.nn.softmax(tf.matmul(test_data, weights1) + biases1)
 
 num_epochs = 30
-num_steps = y_train.shape[0] * num_epochs // batch_size
+num_steps = y_train.shape[0] // batch_size
 print(num_steps)
 
 def accuracy(predictions, labels):
@@ -89,18 +89,20 @@ def accuracy(predictions, labels):
 
 with tf.Session(graph=graph) as session:
     tf.global_variables_initializer().run()
-    for step in range(num_steps):
-        offset = (step * batch_size) % (y_train.shape[0] - batch_size)
+    for epoch in range(1, num_epochs + 1):
+        print("<<< EPOCH {} >>>".format(epoch))
+        for step in range(num_steps):
+            offset = (step * batch_size) % (y_train.shape[0] - batch_size)
 
-        batch_data = X_train[offset:(offset + batch_size)]
-        batch_labels = y_train[offset:(offset + batch_size), :]
+            batch_data = X_train[offset:(offset + batch_size)]
+            batch_labels = y_train[offset:(offset + batch_size), :]
 
-        feed_dict = {train_data: batch_data, train_labels: batch_labels}
-        _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
+            feed_dict = {train_data: batch_data, train_labels: batch_labels}
+            _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
 
-        if step % 100 == 0:
-            print("Minibatch loss at step %d: %f" % (step, l))
-            print("Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
+            if step % 100 == 0:
+                print("Minibatch loss at step %d: %f" % (step, l))
+                print("Minibatch accuracy: %.1f%%" % accuracy(predictions, batch_labels))
 
-            print("VALIDATION accuracy: %.1f%%" % accuracy(dev_prediction.eval(), y_dev))
+                print("VALIDATION accuracy: %.1f%%" % accuracy(dev_prediction.eval(), y_dev))
     print("FINAL TEST accuracy: %.1f%%" % accuracy(test_prediction.eval(), y_test))
