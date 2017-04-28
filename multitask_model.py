@@ -71,7 +71,7 @@ class MTLModel:
         self.losses = {}
         self.optimizers = {}
         self.labels = {}
-        # self.batch_size = tf.placeholder(tf.int16, [1])
+        self.input_data = tf.placeholder(tf.float32, [None, input_length])
 
         shared_layers = args.get("shared_layers", 1)
         hidden_size = args.get("hidden_size", 50)
@@ -81,12 +81,9 @@ class MTLModel:
         global_step = tf.Variable(0)
         learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
 
-        self.input_data = tf.placeholder(tf.float32, [None, input_length])
-
         # SHARED LAYERS
         shared_layer = self.input_data
         for _ in range(shared_layers):
-            # shared_layer = tf.layers.dense(shared_layer, hidden_size)
             shared_layer = dense(shared_layer, hidden_size)
 
         # TASK OPS
