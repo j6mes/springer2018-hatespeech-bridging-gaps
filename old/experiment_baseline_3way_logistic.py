@@ -1,9 +1,8 @@
-import random
 import numpy as np
 import tensorflow as tf
-
 from dataset_reader import DataSet, DataSplit
-from composite_dataset import CompositeDataset
+
+from old.composite_dataset import CompositeDataset
 
 np.random.seed(1)
 tf.set_random_seed(1)

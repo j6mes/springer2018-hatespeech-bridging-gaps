@@ -1,9 +1,6 @@
-import re
-from pprint import pprint
-import json
-
-from dataset_reader import DataSet
 from preprocessing import preprocess
+
+from old.dataset_reader import DataSet
 
 
 def ngrams(input, n):

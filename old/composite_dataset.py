@@ -1,11 +1,11 @@
 import random
 
-from tqdm import tqdm
-
-from dataset_reader import DataSet
 from features import features
 from preprocessing import preprocess
+from tqdm import tqdm
 from vocab import Vocab
+
+from old.dataset_reader import DataSet
 
 
 class CompositeDataset():

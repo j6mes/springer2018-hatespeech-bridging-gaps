@@ -1,10 +1,10 @@
 from collections import defaultdict
 
-from tqdm import tqdm
-
-from dataset_reader import DataSet
 from features import features
 from preprocessing import preprocess
+from tqdm import tqdm
+
+from old.dataset_reader import DataSet
 
 
 class Vocab():

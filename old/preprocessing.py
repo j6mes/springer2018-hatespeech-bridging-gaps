@@ -1,8 +1,6 @@
 import re
-from pprint import pprint
-import json
 
-from dataset_reader import DataSet
+from old.dataset_reader import DataSet
 
 
 def pp_lowercase(text):
