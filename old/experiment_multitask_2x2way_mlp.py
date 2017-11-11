@@ -1,12 +1,10 @@
 import numpy as np
 import tensorflow as tf
 <<<<<<< HEAD:old/experiment_multitask_2x2way_mlp.py
-from dataset_reader import DataSet
 from sklearn.metrics import classification_report
 
-from old.composite_dataset import CompositeDataset
 =======
-import multitask_model
+from old import multitask_model
 from dataset_reader import DataSet
 from composite_dataset import CompositeDataset
 import util
