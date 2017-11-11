@@ -12,6 +12,11 @@ class Formatter():
         pass
 
 
+
 class TextAnnotationFormatter(Formatter):
     def format_line(self,line):
         return {"data":line["text"],"annotation":self.label_schema.get_id(line["Annotation"])}
+
+class DavidsonFormatter(Formatter):
+    def format_line(self, line):
+        return {"data": line["tweet_text"], "annotation": self.label_schema.get_id(line["does_this_tweet_contain_hate_speech"])}

@@ -1,15 +1,16 @@
 import json
 import random
+import csv
 
-import os
-
-from dataset.label_schema import WaseemLabelSchema
 from util.random import get_seed
 
 
 class Reader:
+    def __init__(self,encoding="utf-8"):
+        self.enc = encoding
+
     def read(self,file):
-        with open(file,"r") as f:
+        with open(file,"r",encoding = self.enc) as f:
             return self.process(f)
 
     def process(self,f):
@@ -17,8 +18,9 @@ class Reader:
 
 
 class CSVReader(Reader):
-    pass
-
+    def process(self,fp):
+        r = csv.DictReader(fp)
+        return [line for line in r]
 
 class JSONReader(Reader):
     def process(self,fp):

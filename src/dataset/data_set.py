@@ -1,8 +1,8 @@
 import os
 
-from dataset.formatter import TextAnnotationFormatter
-from dataset.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema
-from dataset.reader import JSONLineReader
+from dataset.formatter import TextAnnotationFormatter, DavidsonFormatter
+from dataset.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema
+from dataset.reader import JSONLineReader, CSVReader
 
 
 class DataSet():
@@ -33,23 +33,27 @@ if __name__ == "__main__":
     waseem_hovy = os.path.join("data","amateur_expert.json")
 
 
+    csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema())
     formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema())
-
 
     datasets = [
         DataSet(file=sexism_file, reader=jlr, formatter=formatter),
         DataSet(file=racism_file, reader=jlr, formatter=formatter),
         DataSet(file=neither_file, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy, reader=jlr, formatter=formatter2)
+        DataSet(file=waseem_hovy, reader=jlr, formatter=formatter2),
         ]
 
     composite = CompositeDataset()
     for dataset in datasets:
         dataset.read()
-        print(dataset.data[0:10])
         composite.add(dataset)
 
 
-    print(composite.data)
+    davidson = DataSet(file=os.path.join("data","twitter-hate-speech-classifier-DFE-a845520.csv"),
+                       reader=csvreader,
+                       formatter=DavidsonFormatter(DavidsonLabelSchema()))
+    davidson.read()
+
+
