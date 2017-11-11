@@ -1,9 +1,9 @@
 import numpy as np
 import tensorflow as tf
-import util
 from dataset_reader import DataSet
 from sklearn.metrics import classification_report
 
+from old import util
 from old.composite_dataset import CompositeDataset
 
 np.random.seed(1)

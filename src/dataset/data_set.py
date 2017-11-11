@@ -18,13 +18,22 @@ class DataSet():
 
 
 
-class CompositeDataset():
+class CompositeDataset(DataSet):
     def __init__(self):
         self.data = []
 
     def add(self,dataset):
         print("Adding "+ str(dataset))
         self.data.extend(dataset.data)
+
+    def num_classes(self):
+
+        classes = set()
+
+        for datum in self.data:
+            classes.add(datum["label"])
+
+        return len(classes)
 
 if __name__ == "__main__":
     sexism_file = os.path.join("data","sexism.json")

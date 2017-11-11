@@ -1,6 +1,6 @@
+import csv
 import json
 import random
-import csv
 
 from util.random import get_seed
 

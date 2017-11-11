@@ -4,10 +4,9 @@ import tensorflow as tf
 from sklearn.metrics import classification_report
 
 =======
-from old import multitask_model
+from old import multitask_model, util
 from dataset_reader import DataSet
 from composite_dataset import CompositeDataset
-import util
 >>>>>>> eeae7e99b8e2df1bd36c31f904abcabfe983e264:experiment_multitask_2x2way_mlp.py
 
 np.random.seed(1)
