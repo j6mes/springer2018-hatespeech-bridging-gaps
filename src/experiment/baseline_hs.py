@@ -59,5 +59,5 @@ if __name__ == "__main__":
 
     model = MLP(10,10,composite.num_classes())
 
-    
+
     train(model,composite.data,200,1e-3,10)
