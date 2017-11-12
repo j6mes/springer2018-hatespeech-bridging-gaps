@@ -14,7 +14,7 @@ class DataSet():
 
 
     def read(self):
-        self.data.extend(self.formatter.format(self.reader.read(self.file)))
+        self.data.extend(self.formatter.format(self.reader.read(self.file)[:10]))
 
 
 
