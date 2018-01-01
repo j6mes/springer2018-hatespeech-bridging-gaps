@@ -53,7 +53,6 @@ def classifier(inputs, y, n_classes):
 
 def dense(inputs, hidden_size):
     input_dim = int(inputs.get_shape()[1])
-    print(input_dim, hidden_size)
     w = tf.get_variable("weights", [input_dim, hidden_size],
                         initializer=xavier_init(input_dim, hidden_size))
     b = tf.get_variable("biases", [hidden_size],
@@ -78,8 +77,9 @@ class MTLModel:
 
         tf.set_random_seed(1)
 
-        global_step = tf.Variable(0)
-        learning_rate = tf.train.exponential_decay(0.5, global_step, 1000, 0.8)
+        self.global_step = tf.Variable(0)
+        learning_rate = tf.train.exponential_decay(
+            0.5, self.global_step, 1000, 0.8)
 
         # SHARED LAYERS
         shared_layer = self.input_data
@@ -96,7 +96,7 @@ class MTLModel:
                 self.predictions[task] = pred
                 self.losses[task] = loss
                 self.optimizers[task] = tf.train.GradientDescentOptimizer(
-                    learning_rate).minimize(loss, global_step=global_step)
+                    learning_rate).minimize(loss, global_step=self.global_step)
 
     def step(self, session, task, inputs, y=None, mode="train"):
         if mode == "train":
@@ -107,8 +107,7 @@ class MTLModel:
         elif mode == "predict-loss":
             return session.run([self.losses[task], self.predictions[task]],
                                feed_dict={self.input_data: inputs,
-                                          self.labels[task]: y}
-                               )
+                                          self.labels[task]: y})
         elif mode == "predict":
             return session.run(self.predictions[task],
                                feed_dict={self.input_data: inputs})
