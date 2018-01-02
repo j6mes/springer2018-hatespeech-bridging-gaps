@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     mname = "expt5"
 
-   
+
 
     sexism_file = os.path.join("data","sexism.json")
     racism_file = os.path.join("data","racism.json")
@@ -65,6 +65,7 @@ if __name__ == "__main__":
 
     train_fs, _, test_fs = features.load(waseem_composite, None, davidson)
 
+    print("Number of features: {0}".format(train_fs[0].shape[1]))
     model = MLP(train_fs[0].shape[1],100,davidson.num_classes())
 
 
@@ -74,8 +75,7 @@ if __name__ == "__main__":
     if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
-        train(model, train_fs, 500, 1e-2, 90)
+        train(model, train_fs, 2, 1e-3, 10)
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
-    train(model,train_fs,200,1e-3,10)
     print_evaluation(model,test_fs, DavidsonLabelSchema())

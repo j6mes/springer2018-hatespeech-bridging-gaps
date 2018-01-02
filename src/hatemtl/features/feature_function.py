@@ -18,13 +18,13 @@ def char_ngrams(input, n):
 
 class LexFeatureFunction(FeatureFunction):
 
-    def __init__(self,naming=""):
+    def __init__(self,max_size=5000,naming=""):
         super().__init__()
-        self.vocab = Vocab()
+        self.vocab = Vocab(max_size)
         self.naming = naming
 
     def inform(self,*datasets):
-        print("Inform featuers")
+        print("Inform features")
         for dataset in datasets:
             if dataset is not None:
                 generated = self.process(dataset)

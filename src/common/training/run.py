@@ -41,7 +41,7 @@ def train(model, fs, batch_size, lr, epochs,dev=None, clip=None, early_stopping=
 
         batcher = Batcher(data, batch_size)
 
-        for batch, size, start, end in batcher:
+        for batch, size, start, end in tqdm(batcher):
             d,gold = prepare_with_labels(batch,labels[start:end])
 
             model.train()
