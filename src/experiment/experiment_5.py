@@ -6,7 +6,8 @@ from common.features.feature_function import Features
 from common.training.options import gpu
 from common.training.run import train, print_evaluation
 
-from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema
+from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
+    DavidsonToZLabelSchema
 from hatemtl.features.formatter import TextAnnotationFormatter, DavidsonFormatter
 from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction
 from hatemtl.model.multi_layer import MLP
@@ -36,8 +37,8 @@ if __name__ == "__main__":
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema())
-    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema())
-    df = DavidsonFormatter(DavidsonLabelSchema())
+    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),mapping={0:0,1:1,2:2,3:0})
+    df = DavidsonFormatter(DavidsonToZLabelSchema(),mapping={0:0,1:1,2:2})
 
 
     datasets = [
