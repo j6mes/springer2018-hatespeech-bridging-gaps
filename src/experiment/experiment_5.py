@@ -25,10 +25,7 @@ if __name__ == "__main__":
 
     mname = "expt5"
 
-    m = nn.Linear(20, 30)
-    input = autograd.Variable(torch.rand(12949, 20))
-    output = m(input)
-    print(output.size())
+   
 
     sexism_file = os.path.join("data","sexism.json")
     racism_file = os.path.join("data","racism.json")
