@@ -1,8 +1,5 @@
 import csv
 import json
-import random
-
-from util.random import get_seed
 
 
 class Reader:
@@ -33,25 +30,4 @@ class JSONLineReader(Reader):
         for line in fp.readlines():
             data.append(json.loads(line.strip()))
         return data
-
-
-
-
-
-
-
-
-
-class DataSplit():
-    r = random.Random(get_seed())
-
-    def __init__(self,data,train=0.8,dev=0.1):
-        self.data = data
-        self.r.shuffle(self.data)
-
-        splits = int(len(self.data) * train), int(len(self.data) * (train+dev))
-        self.train, self.dev, self.test = self.data[:splits[0]], self.data[splits[0]:splits[1]], self.data[splits[1]:]
-
-
-
 

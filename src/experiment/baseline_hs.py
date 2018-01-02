@@ -64,7 +64,25 @@ def train(model,data,batch_size,lr,epochs):
             loss.backward()
             optimizer.step()
 
+def print_evaluation(model,data,ls,log=None):
+    features,actual = data
+    predictions = predict(model, features, 500).data.numpy().reshape(-1).tolist()
 
+    labels = [ls.idx[i] for i, _ in enumerate(ls.idx)]
+
+    actual = [labels[i] for i in actual]
+    predictions = [labels[i] for i in predictions]
+
+    print(accuracy_score(actual, predictions))
+    print(classification_report(actual, predictions))
+    print(confusion_matrix(actual, predictions))
+
+    data = zip(actual,predictions)
+    if log is not None:
+        f = open(log, "w+")
+        for a,p in data:
+            f.write(json.dumps({"actual": a, "predicted": p}) + "\n")
+        f.close()
 
 
 
@@ -142,5 +160,4 @@ if __name__ == "__main__":
     fs = features.load(composite)
 
     model = MLP(fs[0].shape[1],123,composite.num_classes())
-
     train(model,fs,200,1e-3,10)
