@@ -63,6 +63,7 @@ if __name__ == "__main__":
     davidson = DataSet(file=os.path.join("data","twitter-hate-speech-classifier-DFE-a845520.csv"),
                        reader=csvreader,
                        formatter=DavidsonFormatter(DavidsonLabelSchema()))
+
     davidson.read()
 
 
