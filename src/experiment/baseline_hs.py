@@ -50,13 +50,15 @@ if __name__ == "__main__":
         DataSet(file=waseem_hovy, reader=jlr, formatter=formatter2),
         ]
 
-    waseen_composite = CompositeDataset()
+    waseem_composite = CompositeDataset()
     for dataset in datasets:
         dataset.read()
-        waseen_composite.add(dataset)
+        waseem_composite.add(dataset)
 
 
     davidson = DataSet(os.path.join("data","davidson.clean.csv"),reader=csvreader,formatter=df)
+    davidson.read()
+
     features = Features([UnigramFeatureFunction(naming=mname),
                          BigramFeatureFunction(naming=mname),
                          CharNGramFeatureFunction(1,naming=mname),
@@ -64,7 +66,7 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, _, test_fs = features.load(waseen_composite,None, davidson)
+    train_fs, _, test_fs = features.load(waseem_composite, None, davidson)
 
     model = MLP(train_fs[0].shape[1],100,davidson.num_classes())
 

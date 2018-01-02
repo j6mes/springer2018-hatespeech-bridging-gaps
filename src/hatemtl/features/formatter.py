@@ -7,4 +7,4 @@ class TextAnnotationFormatter(Formatter):
 
 class DavidsonFormatter(Formatter):
     def format_line(self, line):
-        return {"data": line["tweet_text"], "label": self.label_schema.get_id(line["does_this_tweet_contain_hate_speech"])}
+        return {"data": line["tweet"], "label": int(line["class"])}
