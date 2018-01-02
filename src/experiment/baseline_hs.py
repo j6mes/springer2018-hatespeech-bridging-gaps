@@ -1,125 +1,29 @@
 import os
 
-from torch.autograd import Variable
-from tqdm import tqdm
+from common.dataset.data_set import DataSet, CompositeDataset
+from common.dataset.reader import CSVReader, JSONLineReader
+from common.features.feature_function import Features
+from common.training.options import gpu
+from common.training.run import train, print_evaluation
+
+from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema
+from hatemtl.features.formatter import TextAnnotationFormatter, DavidsonFormatter
+from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction
+from hatemtl.model.multi_layer import MLP
+
+from torch import nn, autograd
+
 import torch
-import numpy as np
-import torch.nn.functional as F
-from collections import defaultdict
-
-from dataset.batcher import Batcher
-from dataset.data_set import DataSet, CompositeDataset
-from dataset.formatter import TextAnnotationFormatter
-from dataset.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema
-from dataset.reader import CSVReader, JSONLineReader
-
-from features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction
-from model.multi_layer import MLP
-from scipy.sparse import hstack
-
-def transpose(l):
-    return list(map(list, zip(*l)))
-
-def prepare(data,labels):
-    data = data.todok()
-    i = torch.from_numpy(np.array(transpose(list(data.keys())),dtype=np.int64))
-    v = torch.FloatTensor(list(data.values()))
-    return Variable(torch.sparse.FloatTensor(i, v, torch.Size(data.shape))), Variable(torch.LongTensor(labels))
 
 
+def model_exists(mname):
+    if not os.path.exists("models"):
+        os.mkdir("models")
+    return os.path.exists(os.path.join("models","{0}.model".format(mname)))
 
-def prepare2(data,labels):
-    data = data.todense()
-    v = torch.FloatTensor(np.array(data))
-    return Variable(v), Variable(torch.LongTensor(labels))
-
-
-def train(model,data,batch_size,lr,epochs):
-
-    class Simple(nn.Module):
-        def __init__(self,inf,outf):
-            super().__init__()
-            self.fc = nn.Linear(inf,outf)
-
-        def forward(self, d):
-            return self.fc(d)
-
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    steps = 0
-
-    batcher = Batcher(data,batch_size)
-
-
-
-    for epoch in range(epochs):
-        for batch,size in batcher:
-            d,labels = prepare2(*batch)
-
-            optimizer.zero_grad()
-            logits = model(d)
-
-            loss = F.cross_entropy(logits,labels)
-
-            loss.backward()
-            optimizer.step()
-
-def print_evaluation(model,data,ls,log=None):
-    features,actual = data
-    predictions = predict(model, features, 500).data.numpy().reshape(-1).tolist()
-
-    labels = [ls.idx[i] for i, _ in enumerate(ls.idx)]
-
-    actual = [labels[i] for i in actual]
-    predictions = [labels[i] for i in predictions]
-
-    print(accuracy_score(actual, predictions))
-    print(classification_report(actual, predictions))
-    print(confusion_matrix(actual, predictions))
-
-    data = zip(actual,predictions)
-    if log is not None:
-        f = open(log, "w+")
-        for a,p in data:
-            f.write(json.dumps({"actual": a, "predicted": p}) + "\n")
-        f.close()
-
-
-
-class Features():
-    def __init__(self,features=list(),preprocessing=None):
-        self.preprocessing = preprocessing
-        self.feature_functions = features
-        self.vocabs = dict()
-
-    def load(self,dataset):
-        fs = []
-        preprocessed = self.preprocess_all(dataset.data)
-        for feature_function in self.feature_functions:
-            print("Load {0}".format(feature_function))
-            fs.append(feature_function.lookup(preprocessed))
-        return hstack(fs),self.labels(dataset.data)
-
-    def labels(self,data):
-        return [datum["label"] for datum in data]
-
-    def preprocess_all(self,data):
-        return list(
-            map(
-                lambda datum: self.preprocessing(datum["data"]) if self.preprocessing is not None else datum["data"],
-                data))
-
-    def generate_vocab(self,dataset):
-        preprocessed = self.preprocess_all(dataset.data)
-        print(len(preprocessed))
-        for feature_function in self.feature_functions:
-            print("Inform {0}".format(feature_function))
-            feature_function.inform(preprocessed)
-
-from torch import nn, autograd,rand
-import torch
-import sys
 if __name__ == "__main__":
+
+    mname = "expt5"
 
     m = nn.Linear(20, 30)
     input = autograd.Variable(torch.rand(12949, 20))
@@ -136,6 +40,8 @@ if __name__ == "__main__":
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema())
     formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema())
+    df = DavidsonFormatter(DavidsonLabelSchema())
+
 
     datasets = [
         DataSet(file=sexism_file, reader=jlr, formatter=formatter),
@@ -144,20 +50,33 @@ if __name__ == "__main__":
         DataSet(file=waseem_hovy, reader=jlr, formatter=formatter2),
         ]
 
-    composite = CompositeDataset()
+    waseen_composite = CompositeDataset()
     for dataset in datasets:
         dataset.read()
-        composite.add(dataset)
+        waseen_composite.add(dataset)
 
-    features = Features([UnigramFeatureFunction(),
-                         BigramFeatureFunction(),
-                         CharNGramFeatureFunction(1),
-                         CharNGramFeatureFunction(2),
-                         CharNGramFeatureFunction(3)
+
+    davidson = DataSet(os.path.join("data","davidson.clean.csv"),reader=csvreader,formatter=df)
+    features = Features([UnigramFeatureFunction(naming=mname),
+                         BigramFeatureFunction(naming=mname),
+                         CharNGramFeatureFunction(1,naming=mname),
+                         CharNGramFeatureFunction(2,naming=mname),
+                         CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    features.generate_vocab(composite)
-    fs = features.load(composite)
+    train_fs, _, test_fs = features.load(waseen_composite,None, davidson)
 
-    model = MLP(fs[0].shape[1],123,composite.num_classes())
-    train(model,fs,200,1e-3,10)
+    model = MLP(train_fs[0].shape[1],100,davidson.num_classes())
+
+
+    if gpu():
+        model.cuda()
+
+    if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
+        model.load_state_dict(torch.load("models/{0}.model".format(mname)))
+    else:
+        train(model, train_fs, 500, 1e-2, 90)
+        torch.save(model.state_dict(), "models/{0}.model".format(mname))
+
+    train(model,train_fs,200,1e-3,10)
+    print_evaluation(model,test_fs, DavidsonLabelSchema())

@@ -1,6 +1,8 @@
 import numpy as np
 import os
 import pickle
+import scipy.sparse
+
 class Features():
     def __init__(self,features=list(),label_name="label",base_path="features"):
         self.feature_functions = features
@@ -26,7 +28,7 @@ class Features():
                 or (test is not None and not os.path.exists(os.path.join(ffpath, "test"))) or \
                 os.getenv("DEBUG","").lower() in ["y", "1", "t", "yes"]:
 
-                self.inform(train,dev,test)
+                ff.inform(train.data,dev.data if dev is not None else None,test.data if test is not None else None)
 
             train_fs.append(self.generate_or_load(ff, train, "train"))
             dev_fs.append(self.generate_or_load(ff, dev, "dev"))
@@ -37,7 +39,7 @@ class Features():
 
     def out(self,features,ds):
         if ds is not None:
-            return np.hstack(features) if len(features) > 1 else features[0], self.labels(ds.data)
+            return scipy.sparse.hstack(features) if len(features) > 1 else features[0], self.labels(ds.data)
         return [[]],[]
 
     def generate_or_load(self,feature,dataset,name):
@@ -70,18 +72,9 @@ class Features():
     def labels(self,data):
         return [datum[self.label_name] for datum in data]
 
-    def inform(self,train,dev=None,test=None):
-        for feature_function in self.feature_functions:
-            print("Inform {0} with {1} data".format(feature_function,len(train.data)))
-
-            feature_function.inform(train.data,
-                                    dev.data if dev is not None else None,
-                                    test.data if test is not None else None)
-
     def save_vocab(self, mname):
         for ff in self.feature_functions:
             ff.save(mname)
-
 
     def load_vocab(self,mname):
         for ff in self.feature_functions:
