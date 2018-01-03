@@ -6,7 +6,8 @@ from common.features.feature_function import Features
 from common.training.options import gpu
 from common.training.run import train, print_evaluation
 
-from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema
+from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
+    DavidsonToZLabelSchema
 from hatemtl.features.formatter import TextAnnotationFormatter, DavidsonFormatter
 from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction
 from hatemtl.model.multi_layer import MLP
@@ -25,10 +26,7 @@ if __name__ == "__main__":
 
     mname = "expt5"
 
-    m = nn.Linear(20, 30)
-    input = autograd.Variable(torch.rand(12949, 20))
-    output = m(input)
-    print(output.size())
+
 
     sexism_file = os.path.join("data","sexism.json")
     racism_file = os.path.join("data","racism.json")
@@ -39,15 +37,15 @@ if __name__ == "__main__":
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema())
-    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema())
-    df = DavidsonFormatter(DavidsonLabelSchema())
+    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),mapping={0:0,1:1,2:2,3:0})
+    df = DavidsonFormatter(DavidsonToZLabelSchema(),mapping={0:0,1:1,2:2})
 
 
     datasets = [
         DataSet(file=sexism_file, reader=jlr, formatter=formatter),
         DataSet(file=racism_file, reader=jlr, formatter=formatter),
         DataSet(file=neither_file, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy, reader=jlr, formatter=formatter2),
+        DataSet(file=waseem_hovy, reader=jlr, formatter=formatter2)
         ]
 
     waseem_composite = CompositeDataset()
@@ -68,7 +66,8 @@ if __name__ == "__main__":
 
     train_fs, _, test_fs = features.load(waseem_composite, None, davidson)
 
-    model = MLP(train_fs[0].shape[1],100,davidson.num_classes())
+    print("Number of features: {0}".format(train_fs[0].shape[1]))
+    model = MLP(train_fs[0].shape[1],100,3)
 
 
     if gpu():
@@ -77,8 +76,7 @@ if __name__ == "__main__":
     if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
-        train(model, train_fs, 500, 1e-2, 90)
+        train(model, train_fs, 200, 1e-3, 10)
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
-    train(model,train_fs,200,1e-3,10)
-    print_evaluation(model,test_fs, DavidsonLabelSchema())
+    print_evaluation(model,test_fs, WaseemLabelSchema())

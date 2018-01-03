@@ -1,20 +1,31 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from scipy.sparse import dok_matrix
 from tqdm import tqdm
 class Vocab():
-    def __init__(self):
-        self.vocab = set()
-        self.vocab.add("UNKNOWN")
+    def __init__(self,max_size = None):
+        self.vocab = defaultdict(int)
+        self.max_size = max_size
+
+        if max_size is not None:
+            self.vocab = Counter()
 
     def add(self,all_items):
         for item in all_items:
             for f in item:
-                self.vocab.add(f)
+                self.vocab[f] += 1
 
     def generate_dict(self):
         vocab = dict()
-        for i,word in enumerate(self.vocab):
+
+        if self.max_size is None:
+            words = self.vocab.keys()
+        else:
+            words = [a[0] for a in self.vocab.most_common(self.max_size)]
+        words.append("UNKNOWN")
+        for i,word in enumerate(words):
             vocab[word] = i
+
+
         self.vocab = vocab
 
     def lookup(self,instances):

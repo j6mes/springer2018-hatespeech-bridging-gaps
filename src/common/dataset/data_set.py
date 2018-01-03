@@ -8,7 +8,6 @@ class DataSet():
         self.formatter = formatter
         self.data = []
 
-
     def read(self):
         if os.getenv("DEBUG","").lower() in ["1","y","yes","t"]:
             self.data.extend(filter(lambda record: record is not None, self.formatter.format(self.reader.read(self.file)[:10])))
