@@ -1,6 +1,8 @@
 class Formatter():
-    def __init__(self,label_schema):
+    def __init__(self,label_schema, mapping=None):
         self.label_schema = label_schema
+        self.mapping = mapping
+
 
     def format(self,lines):
         formatted = []
@@ -11,6 +13,10 @@ class Formatter():
                     formatted.extend(fl)
                 else:
                     formatted.append(fl)
+
+        if self.mapping is not None:
+            for item in formatted:
+                item["label"] = self.mapping[item["label"]]
 
         return formatted
 
