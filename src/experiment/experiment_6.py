@@ -25,7 +25,7 @@ def model_exists(mname):
 
 if __name__ == "__main__":
 
-    mname = "expt5"
+    mname = "expt6"
 
     sexism_file_tr = os.path.join("data","waseem_s.tr.json")
     racism_file_tr = os.path.join("data","waseem_r.tr.json")
@@ -38,12 +38,16 @@ if __name__ == "__main__":
     waseem_hovy_de = os.path.join("data","amateur_expert.dv.json")
 
 
+    sexism_file_te = os.path.join("data","waseem_s.te.json")
+    racism_file_te = os.path.join("data","waseem_r.te.json")
+    neither_file_te = os.path.join("data","waseem_n.te.json")
+    waseem_hovy_te = os.path.join("data","amateur_expert.te.json")
+
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema())
     formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),mapping={0:0,1:1,2:2,3:0})
     df = DavidsonFormatter(DavidsonToZLabelSchema(),mapping={0:0,1:1,2:2})
-
 
     datasets_tr = [
         DataSet(file=sexism_file_tr, reader=jlr, formatter=formatter),
@@ -59,6 +63,13 @@ if __name__ == "__main__":
         DataSet(file=waseem_hovy_de, reader=jlr, formatter=formatter2)
     ]
 
+    datasets_te = [
+        DataSet(file=sexism_file_te, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_te, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_te, reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_te, reader=jlr, formatter=formatter2)
+    ]
+
     waseem_tr_composite = CompositeDataset()
     for dataset in datasets_tr:
         dataset.read()
@@ -69,8 +80,10 @@ if __name__ == "__main__":
         dataset.read()
         waseem_de_composite.add(dataset)
 
-    davidson = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
-    davidson.read()
+    waseem_te_composite = CompositeDataset()
+    for dataset in datasets_te:
+        dataset.read()
+        waseem_te_composite.add(dataset)
 
     features = Features([UnigramFeatureFunction(naming=mname),
                          BigramFeatureFunction(naming=mname),
@@ -79,7 +92,7 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson)
+    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, waseem_te_composite)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
     model = MLP(train_fs[0].shape[1],100,3)
