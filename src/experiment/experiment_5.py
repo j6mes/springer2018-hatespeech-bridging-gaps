@@ -16,6 +16,9 @@ from hatemtl.model.multi_layer import MLP
 from torch import nn, autograd
 
 import torch
+from hatemtl.features.preprocessing import preprocess as pp
+
+import torch
 
 
 def model_exists(mname):
@@ -40,9 +43,9 @@ if __name__ == "__main__":
 
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
-    formatter = TextAnnotationFormatter(WaseemLabelSchema())
-    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),mapping={0:0,1:1,2:2,3:0})
-    df = DavidsonFormatter(DavidsonToZLabelSchema(),mapping={0:0,1:1,2:2})
+    formatter = TextAnnotationFormatter(WaseemLabelSchema(),preprocessing=pp)
+    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2,3:0})
+    df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2})
 
 
     datasets_tr = [
