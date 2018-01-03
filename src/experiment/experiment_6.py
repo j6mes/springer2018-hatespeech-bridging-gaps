@@ -107,7 +107,7 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
         train(model, train_fs, 50, 1e-3, 30, dev=dev_fs, early_stopping=EarlyStopping(mname),
-              lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
+              lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.8, 3))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
     print_evaluation(model,dev_fs, WaseemLabelSchema())
