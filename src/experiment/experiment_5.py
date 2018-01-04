@@ -5,7 +5,8 @@ from common.dataset.reader import CSVReader, JSONLineReader
 from common.features.feature_function import Features
 from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
-from common.training.run import train, print_evaluation
+from common.training.run import train, print_evaluation, exp_lr_scheduler
+from common.util.random import SimpleRandom
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
@@ -16,6 +17,9 @@ from hatemtl.model.multi_layer import MLP
 from torch import nn, autograd
 
 import torch
+from hatemtl.features.preprocessing import preprocess as pp
+
+import torch
 
 
 def model_exists(mname):
@@ -24,7 +28,7 @@ def model_exists(mname):
     return os.path.exists(os.path.join("models","{0}.model".format(mname)))
 
 if __name__ == "__main__":
-
+    SimpleRandom.set_seeds()
     mname = "expt5"
 
     sexism_file_tr = os.path.join("data","waseem_s.tr.json")
@@ -40,9 +44,9 @@ if __name__ == "__main__":
 
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
-    formatter = TextAnnotationFormatter(WaseemLabelSchema())
-    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),mapping={0:0,1:1,2:2,3:0})
-    df = DavidsonFormatter(DavidsonToZLabelSchema(),mapping={0:0,1:1,2:2})
+    formatter = TextAnnotationFormatter(WaseemLabelSchema(),preprocessing=pp)
+    formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2,3:0})
+    df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2})
 
 
     datasets_tr = [
@@ -82,7 +86,7 @@ if __name__ == "__main__":
     train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
-    model = MLP(train_fs[0].shape[1],100,3)
+    model = MLP(train_fs[0].shape[1],20,3)
 
     if gpu():
         model.cuda()
@@ -90,7 +94,8 @@ if __name__ == "__main__":
     if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
-        train(model, train_fs, 200, 1e-3, 10,dev=dev_fs,early_stopping=EarlyStopping(mname))
+        train(model, train_fs, 50, 1e-3, 30, dev=dev_fs, early_stopping=EarlyStopping(mname),
+              lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
     print_evaluation(model,dev_fs, WaseemLabelSchema())

@@ -10,6 +10,15 @@ from common.training.batcher import Batcher, prepare, prepare_with_labels
 from common.util.random import SimpleRandom
 
 
+def exp_lr_scheduler(optimizer, epoch, lr_decay=0.1, lr_decay_epoch=7):
+    """Decay learning rate by a factor of lr_decay every lr_decay_epoch epochs"""
+    if epoch % lr_decay_epoch:
+        return optimizer
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] *= lr_decay
+    return optimizer
+
 def evaluate(model,data,labels,batch_size):
     predicted = predict(model,data,batch_size)
     return accuracy_score(labels,predicted.data.numpy().reshape(-1))
@@ -26,8 +35,8 @@ def predict(model, data, batch_size):
         predicted.extend(torch.max(logits, 1)[1])
     return torch.stack(predicted)
 
-def train(model, fs, batch_size, lr, epochs,dev=None, clip=None, early_stopping=None,name=None):
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
+def train(model, fs, batch_size, lr, epochs,dev=None, clip=None, early_stopping=None,l2=1e-5,lr_schedule=None):
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2)
 
     data, labels = fs
     if dev is not None:
@@ -41,7 +50,7 @@ def train(model, fs, batch_size, lr, epochs,dev=None, clip=None, early_stopping=
 
         batcher = Batcher(data, batch_size)
 
-        for batch, size, start, end in tqdm(batcher):
+        for batch, size, start, end in batcher:
             d,gold = prepare_with_labels(batch,labels[start:end])
 
             model.train()
@@ -56,7 +65,11 @@ def train(model, fs, batch_size, lr, epochs,dev=None, clip=None, early_stopping=
 
             if clip is not None:
                 torch.nn.utils.clip_grad_norm(model.parameters(), clip)
+
             optimizer.step()
+
+        if lr_schedule is not None:
+            optimizer = lr_schedule(optimizer,epoch)
 
         print("Average epoch loss: {0}".format((epoch_loss/epoch_data).data.numpy()))
 

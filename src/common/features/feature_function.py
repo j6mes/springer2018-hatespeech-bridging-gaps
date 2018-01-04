@@ -26,7 +26,8 @@ class Features():
             if (not os.path.exists(os.path.join(ffpath,"train"))) \
                 or (dev is not None and not os.path.exists(os.path.join(ffpath,"dev"))) \
                 or (test is not None and not os.path.exists(os.path.join(ffpath, "test"))) or \
-                os.getenv("DEBUG","").lower() in ["y", "1", "t", "yes"]:
+                os.getenv("DEBUG","").lower() in ["y", "1", "t", "yes"] or \
+                os.getenv("GENERATE", "").lower() in ["y", "1", "t", "yes"]:
 
                 ff.inform(train.data,dev.data if dev is not None else None,test.data if test is not None else None)
 
@@ -46,7 +47,8 @@ class Features():
         ffpath = os.path.join(self.base_path, feature.get_name())
 
         if dataset is not None:
-            if os.path.exists(os.path.join(ffpath,name)) and os.getenv("DEBUG","").lower() not in ["y","1","t","yes"]:
+            if os.path.exists(os.path.join(ffpath,name)) and not (os.getenv("DEBUG","").lower() in ["y","1","t","yes"]
+                    or os.getenv("GENERATE", "").lower() in ["y", "1", "t", "yes"]):
                 print("Loading Features for {0}.{1}".format(feature, name))
                 with open(os.path.join(ffpath, name), "rb") as f:
                     features = pickle.load(f)
