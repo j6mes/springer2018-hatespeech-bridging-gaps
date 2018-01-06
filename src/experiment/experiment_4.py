@@ -36,18 +36,17 @@ if __name__ == "__main__":
     neither_file_tr = os.path.join("data","waseem_n.tr.json")
     waseem_hovy_tr = os.path.join("data","amateur_expert.tr.json")
 
-    sexism_file_de = os.path.join("data","waseem_s.dv.json")
-    racism_file_de = os.path.join("data","waseem_r.dv.json")
-    neither_file_de = os.path.join("data","waseem_n.dv.json")
-    waseem_hovy_de = os.path.join("data","amateur_expert.dv.json")
+    sexism_file_dv = os.path.join("data","waseem_s.dv.json")
+    racism_file_dv = os.path.join("data","waseem_r.dv.json")
+    neither_file_dv = os.path.join("data","waseem_n.dv.json")
+    waseem_hovy_dv = os.path.join("data","amateur_expert.dv.json")
 
 
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema(),preprocessing=pp)
     formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2,3:0})
-    df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2})
-
+    df = DavidsonFormatter(DavidsonLabelSchema(),preprocessing=pp)
 
     datasets_tr = [
         DataSet(file=sexism_file_tr, reader=jlr, formatter=formatter),
@@ -56,28 +55,16 @@ if __name__ == "__main__":
         DataSet(file=waseem_hovy_tr, reader=jlr, formatter=formatter2)
     ]
 
-    datasets_de = [
-        DataSet(file=sexism_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_de, reader=jlr, formatter=formatter2)
-    ]
-
     waseem_tr_composite = CompositeDataset()
     for dataset in datasets_tr:
         dataset.read()
         waseem_tr_composite.add(dataset)
 
-    waseem_de_composite = CompositeDataset()
-    for dataset in datasets_de:
-        dataset.read()
-        waseem_de_composite.add(dataset)
+    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
+    davidson_te.read()
 
     davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
     davidson_dv.read()
-
-    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
-    davidson_te.read()
 
     features = Features([UnigramFeatureFunction(naming=mname),
                          BigramFeatureFunction(naming=mname),
@@ -101,5 +88,5 @@ if __name__ == "__main__":
               lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
-    print_evaluation(model,dev_fs, WaseemLabelSchema())
-    print_evaluation(model,test_fs, WaseemLabelSchema())
+    print_evaluation(model,dev_fs, DavidsonLabelSchema())
+    print_evaluation(model,test_fs, DavidsonLabelSchema())

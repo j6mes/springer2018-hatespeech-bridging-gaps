@@ -31,53 +31,50 @@ if __name__ == "__main__":
     SimpleRandom.set_seeds()
     mname = "expt5"
 
-    sexism_file_tr = os.path.join("data","waseem_s.tr.json")
-    racism_file_tr = os.path.join("data","waseem_r.tr.json")
-    neither_file_tr = os.path.join("data","waseem_n.tr.json")
-    waseem_hovy_tr = os.path.join("data","amateur_expert.tr.json")
+    sexism_file_te = os.path.join("data","waseem_s.te.json")
+    racism_file_te = os.path.join("data","waseem_r.te.json")
+    neither_file_te = os.path.join("data","waseem_n.te.json")
+    waseem_hovy_te = os.path.join("data","amateur_expert.te.json")
 
-    sexism_file_de = os.path.join("data","waseem_s.dv.json")
-    racism_file_de = os.path.join("data","waseem_r.dv.json")
-    neither_file_de = os.path.join("data","waseem_n.dv.json")
-    waseem_hovy_de = os.path.join("data","amateur_expert.dv.json")
+    sexism_file_dv = os.path.join("data","waseem_s.dv.json")
+    racism_file_dv = os.path.join("data","waseem_r.dv.json")
+    neither_file_dv = os.path.join("data","waseem_n.dv.json")
+    waseem_hovy_dv = os.path.join("data","amateur_expert.dv.json")
 
 
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
     formatter = TextAnnotationFormatter(WaseemLabelSchema(),preprocessing=pp)
     formatter2 = TextAnnotationFormatter(WaseemHovyLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2,3:0})
-    df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2})
+    df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp)
 
 
-    datasets_tr = [
-        DataSet(file=sexism_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_tr, reader=jlr, formatter=formatter2)
+    datasets_dv = [
+        DataSet(file=sexism_file_dv, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_dv, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_dv, reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_dv, reader=jlr, formatter=formatter2)
     ]
 
-    datasets_de = [
-        DataSet(file=sexism_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_de, reader=jlr, formatter=formatter2)
+    datasets_te = [
+        DataSet(file=sexism_file_te, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_te, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_te, reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_te, reader=jlr, formatter=formatter2)
     ]
 
-    waseem_tr_composite = CompositeDataset()
-    for dataset in datasets_tr:
+    waseem_dv_composite = CompositeDataset()
+    for dataset in datasets_dv:
         dataset.read()
-        waseem_tr_composite.add(dataset)
+        waseem_dv_composite.add(dataset)
 
-    waseem_de_composite = CompositeDataset()
-    for dataset in datasets_de:
+    waseem_te_composite = CompositeDataset()
+    for dataset in datasets_te:
         dataset.read()
-        waseem_de_composite.add(dataset)
+        waseem_te_composite.add(dataset)
 
-    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
-    davidson_dv.read()
-
-    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
-    davidson_te.read()
+    davidson = DataSet(os.path.join("data","davidson.tr.csv"),reader=csvreader,formatter=df)
+    davidson.read()
 
     features = Features([UnigramFeatureFunction(naming=mname),
                          BigramFeatureFunction(naming=mname),
@@ -86,7 +83,7 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_dv, davidson_te)
+    train_fs, dev_fs, test_fs = features.load(davidson, waseem_dv_composite, waseem_te_composite)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
     model = MLP(train_fs[0].shape[1],20,3)
