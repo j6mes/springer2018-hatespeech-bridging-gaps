@@ -73,8 +73,12 @@ if __name__ == "__main__":
         dataset.read()
         waseem_te_composite.add(dataset)
 
-    davidson = DataSet(os.path.join("data","davidson.tr.csv"),reader=csvreader,formatter=df)
-    davidson.read()
+    davidson_tr = DataSet(os.path.join("data","davidson.tr.csv"),reader=csvreader,formatter=df)
+    davidson_tr.read()
+
+    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
+    davidson_dv.read()
+
 
     features = Features([UnigramFeatureFunction(naming=mname),
                          BigramFeatureFunction(naming=mname),
@@ -83,7 +87,7 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, dev_fs, test_fs = features.load(davidson, waseem_dv_composite, waseem_te_composite)
+    train_fs, dev_fs, test_fs = features.load(davidson_tr, davidson_dv, waseem_te_composite)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
     model = MLP(train_fs[0].shape[1],20,3)

@@ -29,7 +29,7 @@ def model_exists(mname):
 
 if __name__ == "__main__":
     SimpleRandom.set_seeds()
-    mname = "expt5"
+    mname = "expt3"
 
     sexism_file_tr = os.path.join("data","waseem_s.tr.json")
     racism_file_tr = os.path.join("data","waseem_r.tr.json")
@@ -86,7 +86,7 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_dv, davidson_te)
+    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson_te)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
     model = MLP(train_fs[0].shape[1],20,3)

@@ -29,7 +29,7 @@ def model_exists(mname):
 
 if __name__ == "__main__":
     SimpleRandom.set_seeds()
-    mname = "expt5"
+    mname = "expt4"
 
     sexism_file_tr = os.path.join("data","waseem_s.tr.json")
     racism_file_tr = os.path.join("data","waseem_r.tr.json")
@@ -60,6 +60,19 @@ if __name__ == "__main__":
         dataset.read()
         waseem_tr_composite.add(dataset)
 
+    datasets_dv = [
+        DataSet(file=sexism_file_dv, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_dv, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_dv, reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_dv, reader=jlr, formatter=formatter2)
+    ]
+
+    waseem_dv_composite = CompositeDataset()
+    for dataset in datasets_dv:
+        dataset.read()
+        waseem_dv_composite.add(dataset)
+
+
     davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
     davidson_te.read()
 
@@ -73,7 +86,7 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_dv, davidson_te)
+    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_dv_composite, davidson_te)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
     model = MLP(train_fs[0].shape[1],20,3)
