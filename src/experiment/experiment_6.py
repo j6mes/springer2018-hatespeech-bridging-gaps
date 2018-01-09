@@ -110,5 +110,9 @@ if __name__ == "__main__":
               lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
-    print_evaluation(model,dev_fs, WaseemLabelSchema())
-    print_evaluation(model,test_fs, WaseemLabelSchema())
+
+    if not os.path.exists("logs/experiment6"):
+        os.makedirs("logs/experiment6")
+
+    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/experiment6/dev.jsonl")
+    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment6/test.jsonl")
