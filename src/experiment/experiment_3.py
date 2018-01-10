@@ -7,11 +7,12 @@ from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler
 from common.util.random import SimpleRandom
+from common.util.bpe import BPETransformer
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
 from hatemtl.features.formatter import TextAnnotationFormatter, DavidsonFormatter
-from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction
+from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction, EmbeddingFeatureFunction
 from hatemtl.model.multi_layer import MLP
 
 from torch import nn, autograd
@@ -20,6 +21,9 @@ import torch
 from hatemtl.features.preprocessing import preprocess as pp
 
 import torch
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+BASE_DIR = SCRIPT_DIR + "/../.."
 
 
 def model_exists(mname):
@@ -79,11 +83,18 @@ if __name__ == "__main__":
     davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
     davidson_te.read()
 
+    bpe_embeddings_vocab = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.vocab"
+    bpe_embeddings_file = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.txt"
+    bpe_transformer = BPETransformer(bpe_embeddings_file)
+
     features = Features([UnigramFeatureFunction(naming=mname),
                          BigramFeatureFunction(naming=mname),
                          CharNGramFeatureFunction(1,naming=mname),
                          CharNGramFeatureFunction(2,naming=mname),
-                         CharNGramFeatureFunction(3,naming=mname)
+                         CharNGramFeatureFunction(3,naming=mname),
+                         EmbeddingFeatureFunction(bpe_embeddings_file,
+                                                  preprocessors=bpe_transformer,
+                                                  naming=mname)
                          ])
 
     train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson_te)
