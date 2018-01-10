@@ -11,10 +11,26 @@ class Features():
         self.base_path = base_path
 
 
-    def load(self,train,dev=None,test=None):
-        train_fs = []
-        dev_fs = []
-        test_fs = []
+    def load(self,*datasets):
+        self.inform(*datasets)
+        return [self.load_f(dataset,dataset.name) for dataset in datasets]
+
+    def inform(self,*datasets):
+        for ff in self.feature_functions:
+            ffpath = os.path.join(self.base_path, ff.get_name())
+
+            if not os.path.exists(ffpath):
+                os.makedirs(ffpath)
+
+            # If we need train/dev/test data and these don't exist, we have to recreate the features
+            if not all([os.path.exists(os.path.join(ffpath,dataset.name)) for dataset in datasets]) or \
+                        os.getenv("DEBUG", "").lower() in ["y", "1", "t", "yes"] or \
+                        os.getenv("GENERATE", "").lower() in ["y", "1", "t", "yes"]:
+                ff.inform(*[dataset.data for dataset in datasets])
+
+
+    def load_f(self,dataset,name):
+        features = []
 
         for ff in self.feature_functions:
             ffpath = os.path.join(self.base_path, ff.get_name())
@@ -22,21 +38,11 @@ class Features():
             if not os.path.exists(ffpath):
                 os.makedirs(ffpath)
 
-            #If we need train/dev/test data and these don't exist, we have to recreate the features
-            if (not os.path.exists(os.path.join(ffpath,"train"))) \
-                or (dev is not None and not os.path.exists(os.path.join(ffpath,"dev"))) \
-                or (test is not None and not os.path.exists(os.path.join(ffpath, "test"))) or \
-                os.getenv("DEBUG","").lower() in ["y", "1", "t", "yes"] or \
-                os.getenv("GENERATE", "").lower() in ["y", "1", "t", "yes"]:
 
-                ff.inform(train.data,dev.data if dev is not None else None,test.data if test is not None else None)
+            features.append(self.generate_or_load(ff, dataset, name))
 
-            train_fs.append(self.generate_or_load(ff, train, "train"))
-            dev_fs.append(self.generate_or_load(ff, dev, "dev"))
-            test_fs.append(self.generate_or_load(ff, test, "test"))
+        return self.out(features,dataset)
 
-
-        return self.out(train_fs,train), self.out(dev_fs,dev), self.out(test_fs,test)
 
     def out(self,features,ds):
         if ds is not None:

@@ -50,33 +50,33 @@ if __name__ == "__main__":
 
 
     datasets_dv = [
-        DataSet(file=sexism_file_dv, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_dv, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_dv, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_dv, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_dv, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=racism_file_dv, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=neither_file_dv, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=waseem_hovy_dv, reader=jlr, formatter=formatter2,name=None)
     ]
 
     datasets_te = [
-        DataSet(file=sexism_file_te, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_te, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_te, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_te, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_te, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=racism_file_te, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=neither_file_te, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=waseem_hovy_te, reader=jlr, formatter=formatter2,name=None)
     ]
 
-    waseem_dv_composite = CompositeDataset()
+    waseem_dv_composite = CompositeDataset(name="waseem_dev_composite")
     for dataset in datasets_dv:
         dataset.read()
         waseem_dv_composite.add(dataset)
 
-    waseem_te_composite = CompositeDataset()
+    waseem_te_composite = CompositeDataset(name="waseem_test_composite")
     for dataset in datasets_te:
         dataset.read()
         waseem_te_composite.add(dataset)
 
-    davidson_tr = DataSet(os.path.join("data","davidson.tr.csv"),reader=csvreader,formatter=df)
+    davidson_tr = DataSet(os.path.join("data","davidson.tr.csv"),reader=csvreader,formatter=df,name="davidson_train")
     davidson_tr.read()
 
-    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
+    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df,name="davidson_dev")
     davidson_dv.read()
 
 

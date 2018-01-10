@@ -49,34 +49,34 @@ if __name__ == "__main__":
     df = DavidsonFormatter(DavidsonLabelSchema(),preprocessing=pp)
 
     datasets_tr = [
-        DataSet(file=sexism_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_tr, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_tr, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=racism_file_tr, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=neither_file_tr, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=waseem_hovy_tr, reader=jlr, formatter=formatter2,name=None)
     ]
 
-    waseem_tr_composite = CompositeDataset()
+    waseem_tr_composite = CompositeDataset(name="waseem_composite_train")
     for dataset in datasets_tr:
         dataset.read()
         waseem_tr_composite.add(dataset)
 
     datasets_dv = [
-        DataSet(file=sexism_file_dv, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_dv, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_dv, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_dv, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_dv, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=racism_file_dv, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=neither_file_dv, reader=jlr, formatter=formatter,name=None),
+        DataSet(file=waseem_hovy_dv, reader=jlr, formatter=formatter2,name=None)
     ]
 
-    waseem_dv_composite = CompositeDataset()
+    waseem_dv_composite = CompositeDataset(name="waseem_composite_dev")
     for dataset in datasets_dv:
         dataset.read()
         waseem_dv_composite.add(dataset)
 
 
-    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
+    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df,name="davidson_test")
     davidson_te.read()
 
-    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
+    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df,name="davidson_dev")
     davidson_dv.read()
 
     features = Features([UnigramFeatureFunction(naming=mname),

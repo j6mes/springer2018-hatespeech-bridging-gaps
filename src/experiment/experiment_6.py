@@ -53,37 +53,37 @@ if __name__ == "__main__":
     df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp,mapping={0:0,1:1,2:2})
 
     datasets_tr = [
-        DataSet(file=sexism_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_tr, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_tr, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_tr, name=None, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_tr, name=None, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_tr, name=None, reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_tr, name=None, reader=jlr, formatter=formatter2)
     ]
 
     datasets_de = [
-        DataSet(file=sexism_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_de, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_de, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_de,  name=None, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_de,  name=None, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_de,  name=None, reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_de,   name=None,reader=jlr, formatter=formatter2)
     ]
 
     datasets_te = [
-        DataSet(file=sexism_file_te, reader=jlr, formatter=formatter),
-        DataSet(file=racism_file_te, reader=jlr, formatter=formatter),
-        DataSet(file=neither_file_te, reader=jlr, formatter=formatter),
-        DataSet(file=waseem_hovy_te, reader=jlr, formatter=formatter2)
+        DataSet(file=sexism_file_te,  name=None, reader=jlr, formatter=formatter),
+        DataSet(file=racism_file_te,  name=None, reader=jlr, formatter=formatter),
+        DataSet(file=neither_file_te,  name=None,reader=jlr, formatter=formatter),
+        DataSet(file=waseem_hovy_te,  name=None, reader=jlr, formatter=formatter2)
     ]
 
-    waseem_tr_composite = CompositeDataset()
+    waseem_tr_composite = CompositeDataset(name="waseem_composite_train")
     for dataset in datasets_tr:
         dataset.read()
         waseem_tr_composite.add(dataset)
 
-    waseem_de_composite = CompositeDataset()
+    waseem_de_composite = CompositeDataset("waseem_composite_dev")
     for dataset in datasets_de:
         dataset.read()
         waseem_de_composite.add(dataset)
 
-    waseem_te_composite = CompositeDataset()
+    waseem_te_composite = CompositeDataset("waseem_composite_test")
     for dataset in datasets_te:
         dataset.read()
         waseem_te_composite.add(dataset)

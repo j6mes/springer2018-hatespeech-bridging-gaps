@@ -33,9 +33,9 @@ if __name__ == "__main__":
     csvreader = CSVReader(encoding="ISO-8859-1")
     df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp)
 
-    davidson_tr_dataset = DataSet(os.path.join("data", "davidson.tr.csv"), formatter=df, reader=csvreader)
-    davidson_dv_dataset = DataSet(os.path.join("data", "davidson.dv.csv"), formatter=df, reader=csvreader)
-    davidson_te_dataset = DataSet(os.path.join("data", "davidson.te.csv"), formatter=df, reader=csvreader)
+    davidson_tr_dataset = DataSet(os.path.join("data", "davidson.tr.csv"), formatter=df, reader=csvreader, name="davidson_train")
+    davidson_dv_dataset = DataSet(os.path.join("data", "davidson.dv.csv"), formatter=df, reader=csvreader, name="davidson_dev")
+    davidson_te_dataset = DataSet(os.path.join("data", "davidson.te.csv"), formatter=df, reader=csvreader, name="davidson_test")
 
     davidson_tr_dataset.read()
     davidson_dv_dataset.read()

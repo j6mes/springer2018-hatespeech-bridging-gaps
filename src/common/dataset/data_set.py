@@ -2,11 +2,12 @@ import os
 
 
 class DataSet():
-    def __init__(self,file,reader,formatter):
+    def __init__(self,file,name,reader,formatter):
         self.reader = reader
         self.file = file
         self.formatter = formatter
         self.data = []
+        self.name = name
 
     def read(self):
         if os.getenv("DEBUG","").lower() in ["1","y","yes","t"]:
@@ -18,8 +19,9 @@ class DataSet():
         return len(self.formatter.label_schema.labels)
 
 class CompositeDataset(DataSet):
-    def __init__(self):
+    def __init__(self,name):
         self.data = []
+        self.name = name
 
     def add(self,dataset):
         print("Adding "+ str(dataset))
