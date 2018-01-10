@@ -92,7 +92,7 @@ class EmbeddingFeatureFunction(LexFeatureFunction):
 
     def process(self, data):
         for processor in self.preprocessors:
-            data = processor.transform(data)
+            data = processor.transform_batch(data)
         return map(lambda item: [self.embeddings.get(w, self.OOV)
                                  for w in item["data"].split()], data)
 

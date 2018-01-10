@@ -25,6 +25,16 @@ class BPETransformer:
             for i, k in enumerate(self.vocab))
         self.maxword = max(len(x) for x in self.vocab)
 
+    def transform_batch(self, data):
+        """
+        Transforms a list of text items
+        :param data:
+        :return:
+        """
+        for item in data:
+            item["data"] = self.transform(item["data"])
+            yield item
+
     def transform(self, text):
         """Uses dynamic programming to infer the location of spaces in a string
            without spaces."""

@@ -24,6 +24,7 @@ import torch
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 BASE_DIR = SCRIPT_DIR + "/../.."
+DATA_DIR = BASE_DIR + "/data/"
 
 
 def model_exists(mname):
@@ -35,15 +36,15 @@ if __name__ == "__main__":
     SimpleRandom.set_seeds()
     mname = "expt3"
 
-    sexism_file_tr = os.path.join("data","waseem_s.tr.json")
-    racism_file_tr = os.path.join("data","waseem_r.tr.json")
-    neither_file_tr = os.path.join("data","waseem_n.tr.json")
-    waseem_hovy_tr = os.path.join("data","amateur_expert.tr.json")
+    sexism_file_tr = os.path.join(DATA_DIR,"waseem_s.tr.json")
+    racism_file_tr = os.path.join(DATA_DIR,"waseem_r.tr.json")
+    neither_file_tr = os.path.join(DATA_DIR,"waseem_n.tr.json")
+    waseem_hovy_tr = os.path.join(DATA_DIR,"amateur_expert.tr.json")
 
-    sexism_file_de = os.path.join("data","waseem_s.dv.json")
-    racism_file_de = os.path.join("data","waseem_r.dv.json")
-    neither_file_de = os.path.join("data","waseem_n.dv.json")
-    waseem_hovy_de = os.path.join("data","amateur_expert.dv.json")
+    sexism_file_de = os.path.join(DATA_DIR,"waseem_s.dv.json")
+    racism_file_de = os.path.join(DATA_DIR,"waseem_r.dv.json")
+    neither_file_de = os.path.join(DATA_DIR,"waseem_n.dv.json")
+    waseem_hovy_de = os.path.join(DATA_DIR,"amateur_expert.dv.json")
 
 
     csvreader = CSVReader(encoding="ISO-8859-1")
@@ -77,10 +78,10 @@ if __name__ == "__main__":
         dataset.read()
         waseem_de_composite.add(dataset)
 
-    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df)
+    davidson_dv = DataSet(os.path.join(DATA_DIR,"davidson.dv.csv"),reader=csvreader,formatter=df)
     davidson_dv.read()
 
-    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df)
+    davidson_te = DataSet(os.path.join(DATA_DIR,"davidson.te.csv"),reader=csvreader,formatter=df)
     davidson_te.read()
 
     bpe_embeddings_vocab = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.vocab"
@@ -88,12 +89,12 @@ if __name__ == "__main__":
     bpe_transformer = BPETransformer(bpe_embeddings_file)
 
     features = Features([UnigramFeatureFunction(naming=mname),
-                         BigramFeatureFunction(naming=mname),
-                         CharNGramFeatureFunction(1,naming=mname),
-                         CharNGramFeatureFunction(2,naming=mname),
-                         CharNGramFeatureFunction(3,naming=mname),
+                         # BigramFeatureFunction(naming=mname),
+                         # CharNGramFeatureFunction(1,naming=mname),
+                         # CharNGramFeatureFunction(2,naming=mname),
+                         # CharNGramFeatureFunction(3,naming=mname),
                          EmbeddingFeatureFunction(bpe_embeddings_file,
-                                                  preprocessors=bpe_transformer,
+                                                  preprocessors=[bpe_transformer],
                                                   naming=mname)
                          ])
 
