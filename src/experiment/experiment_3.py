@@ -7,11 +7,12 @@ from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler
 from common.util.random import SimpleRandom
+from common.util.bpe import BPETransformer
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
 from hatemtl.features.formatter import TextAnnotationFormatter, DavidsonFormatter
-from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction
+from hatemtl.features.feature_function import UnigramFeatureFunction, BigramFeatureFunction, CharNGramFeatureFunction, EmbeddingFeatureFunction
 from hatemtl.model.multi_layer import MLP
 
 from torch import nn, autograd
@@ -20,6 +21,9 @@ import torch
 from hatemtl.features.preprocessing import preprocess as pp
 
 import torch
+
+BASE_DIR = "."
+DATA_DIR = BASE_DIR + "/data/"
 
 
 def model_exists(mname):
@@ -31,15 +35,15 @@ if __name__ == "__main__":
     SimpleRandom.set_seeds()
     mname = "expt3"
 
-    sexism_file_tr = os.path.join("data","waseem_s.tr.json")
-    racism_file_tr = os.path.join("data","waseem_r.tr.json")
-    neither_file_tr = os.path.join("data","waseem_n.tr.json")
-    waseem_hovy_tr = os.path.join("data","amateur_expert.tr.json")
+    sexism_file_tr = os.path.join(DATA_DIR,"waseem_s.tr.json")
+    racism_file_tr = os.path.join(DATA_DIR,"waseem_r.tr.json")
+    neither_file_tr = os.path.join(DATA_DIR,"waseem_n.tr.json")
+    waseem_hovy_tr = os.path.join(DATA_DIR,"amateur_expert.tr.json")
 
-    sexism_file_de = os.path.join("data","waseem_s.dv.json")
-    racism_file_de = os.path.join("data","waseem_r.dv.json")
-    neither_file_de = os.path.join("data","waseem_n.dv.json")
-    waseem_hovy_de = os.path.join("data","amateur_expert.dv.json")
+    sexism_file_de = os.path.join(DATA_DIR,"waseem_s.dv.json")
+    racism_file_de = os.path.join(DATA_DIR,"waseem_r.dv.json")
+    neither_file_de = os.path.join(DATA_DIR,"waseem_n.dv.json")
+    waseem_hovy_de = os.path.join(DATA_DIR,"amateur_expert.dv.json")
 
 
     csvreader = CSVReader(encoding="ISO-8859-1")
@@ -73,17 +77,25 @@ if __name__ == "__main__":
         dataset.read()
         waseem_de_composite.add(dataset)
 
-    davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df,name="davidson_dev")
+    davidson_dv = DataSet(os.path.join(DATA_DIR,"davidson.dv.csv"),reader=csvreader,formatter=df,name="davidson_dev")
     davidson_dv.read()
 
-    davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df,name="davidson_test")
+    davidson_te = DataSet(os.path.join(DATA_DIR,"davidson.te.csv"),reader=csvreader,formatter=df,name="davidson_test")
+
     davidson_te.read()
 
-    features = Features([UnigramFeatureFunction(naming=mname),
-                         BigramFeatureFunction(naming=mname),
-                         CharNGramFeatureFunction(1,naming=mname),
-                         CharNGramFeatureFunction(2,naming=mname),
-                         CharNGramFeatureFunction(3,naming=mname)
+    bpe_embeddings_vocab = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.vocab"
+    bpe_embeddings_file = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.txt"
+    bpe_transformer = BPETransformer(bpe_embeddings_file)
+
+    features = Features([#UnigramFeatureFunction(naming=mname),
+                         # BigramFeatureFunction(naming=mname),
+                         # CharNGramFeatureFunction(1,naming=mname),
+                         # CharNGramFeatureFunction(2,naming=mname),
+                         # CharNGramFeatureFunction(3,naming=mname),
+                         EmbeddingFeatureFunction(bpe_embeddings_file,
+                                                  preprocessors=[bpe_transformer],
+                                                  naming=mname)
                          ])
 
     train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson_te)

@@ -73,6 +73,10 @@ if __name__ == "__main__":
         dataset.read()
         waseem_de_composite.add(dataset)
 
+
+    davidson_tr = DataSet(os.path.join("data","davidson.tr.csv"),reader=csvreader,formatter=df,name="davidson_train")
+    davidson_tr.read()
+
     davidson_dv = DataSet(os.path.join("data","davidson.dv.csv"),reader=csvreader,formatter=df,name="davidson_dev")
     davidson_dv.read()
 
@@ -86,11 +90,12 @@ if __name__ == "__main__":
                          CharNGramFeatureFunction(3,naming=mname)
                          ])
 
-    train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson_te)
+    primary_train_fs, aux_train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_tr, waseem_de_composite, davidson_te)
 
-    print("Number of features: {0}".format(train_fs[0].shape[1]))
+    print("Number of features in primary: {0}".format(primary_train_fs[0].shape[1]))
+    print("Number of features aux (=): {0}".format(aux_train_fs[0].shape[1]))
 
-    model = MTMLP(train_fs[0].shape[1],20,3,3)
+    model = MTMLP(primary_train_fs[0].shape[1],20,3,3)
 
     if gpu():
         model.cuda()
@@ -98,7 +103,7 @@ if __name__ == "__main__":
     if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
-        train_mt(model, (train_fs,), 50, 1e-3, 30, dev=dev_fs, early_stopping=EarlyStopping(mname),
+        train_mt(model, (primary_train_fs,aux_train_fs), 50, 1e-3, 30, dev=dev_fs, early_stopping=EarlyStopping(mname),
               lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 

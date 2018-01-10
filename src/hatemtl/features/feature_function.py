@@ -1,5 +1,6 @@
 from common.features.feature_function import FeatureFunction
 from hatemtl.features.vocab import Vocab
+import numpy as np
 
 def ngrams(input, n):
     input = input.split(' ')
@@ -63,8 +64,38 @@ class CharNGramFeatureFunction(LexFeatureFunction):
     def process(self,data):
         return map(lambda item: ["".join(ng) for ng in char_ngrams(" ".join(item["data"].split()), self.size)], data)
 
-
     def get_name(self):
         return self.naming + "-" + CharNGramFeatureFunction.__name__+"-"+str(self.size)
 
 
+class EmbeddingFeatureFunction(LexFeatureFunction):
+    def __init__(self, embedding_file, preprocessors, separator=None,
+                 naming=""):
+        super().__init__(naming=naming)
+        self.preprocessors = preprocessors
+        self.embedding_file = embedding_file
+        self.embeddings = self.read_embeddings(self.embedding_file,
+                                               separator=separator)
+        self.OOV = self.average_embedding(self.embeddings)
+
+    @staticmethod
+    def read_embeddings(embeddings_file, separator=None):
+        w2v = {}
+        for line in open(embeddings_file):
+            w, vec = line.strip().split(separator, 1)
+            w2v[w] = np.array([float(x) for x in vec.split(separator)])
+        return w2v
+
+    @staticmethod
+    def average_embedding(embeddings):
+        return np.average(np.stack([v for v in embeddings.values()]), axis=1)
+
+    def process(self, data):
+        for processor in self.preprocessors:
+            data = processor.transform_batch(data)
+        return map(lambda item: [self.embeddings.get(w, self.OOV)
+                                 for w in item["data"].split()], data)
+
+    def get_name(self):
+        return self.naming + "-" + EmbeddingFeatureFunction.__name__+"-"+str(
+            self.embedding_file)
