@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix,issparse
 from torch.autograd import Variable
 
 from common.training.options import gpu
@@ -44,7 +44,10 @@ def splen(data):
 
 
 def prepare_with_labels(data,labels):
-    data = data.todense()
+    #Note, we should just be passing in a sparse minibatch here! Doing todense on the entire datset is silly
+    if issparse(data):
+        data = data.todense()
+
     v = torch.FloatTensor(np.array(data))
     if gpu():
         return Variable(v.cuda()), Variable(torch.LongTensor(labels).cuda())
@@ -52,7 +55,9 @@ def prepare_with_labels(data,labels):
 
 
 def prepare(data):
-    data = data.todense()
+    #Note, we should just be passing in a sparse minibatch here! Doing todense on the entire datset is silly
+    if issparse(data):
+        data = data.todense()
     v = torch.FloatTensor(np.array(data))
     if gpu():
         return Variable(v.cuda())

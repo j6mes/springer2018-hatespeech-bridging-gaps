@@ -68,15 +68,16 @@ class CharNGramFeatureFunction(LexFeatureFunction):
         return self.naming + "-" + CharNGramFeatureFunction.__name__+"-"+str(self.size)
 
 
-class EmbeddingFeatureFunction(LexFeatureFunction):
+class EmbeddingFeatureFunction(FeatureFunction):
     def __init__(self, embedding_file, preprocessors, separator=None,
                  naming=""):
-        super().__init__(naming=naming)
+        super().__init__()
         self.preprocessors = preprocessors
         self.embedding_file = embedding_file
         self.embeddings = self.read_embeddings(self.embedding_file,
                                                separator=separator)
         self.OOV = self.average_embedding(self.embeddings)
+        self.naming = naming
 
     @staticmethod
     def read_embeddings(embeddings_file, separator=None):
@@ -88,13 +89,15 @@ class EmbeddingFeatureFunction(LexFeatureFunction):
 
     @staticmethod
     def average_embedding(embeddings):
-        return np.average(np.stack([v for v in embeddings.values()]), axis=1)
+        return np.average(np.stack([v for v in embeddings.values()]), axis=0)
 
     def process(self, data):
         for processor in self.preprocessors:
             data = processor.transform_batch(data)
-        return map(lambda item: [self.embeddings.get(w, self.OOV)
-                                 for w in item["data"].split()], data)
+        return np.stack(map(lambda item: np.average([self.embeddings.get(w, self.OOV) for w in item["data"].split()],axis=0), data),axis=0)
+
+    def inform(self,*datasets):
+        pass
 
     def get_name(self):
         return self.naming + "-" + EmbeddingFeatureFunction.__name__+"-"+str(
