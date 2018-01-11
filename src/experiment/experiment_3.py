@@ -88,11 +88,11 @@ if __name__ == "__main__":
     bpe_embeddings_file = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.txt"
     bpe_transformer = BPETransformer(bpe_embeddings_file)
 
-    features = Features([#UnigramFeatureFunction(naming=mname),
-                         # BigramFeatureFunction(naming=mname),
-                         # CharNGramFeatureFunction(1,naming=mname),
-                         # CharNGramFeatureFunction(2,naming=mname),
-                         # CharNGramFeatureFunction(3,naming=mname),
+    features = Features([UnigramFeatureFunction(naming=mname),
+                         BigramFeatureFunction(naming=mname),
+                         CharNGramFeatureFunction(1,naming=mname),
+                         CharNGramFeatureFunction(2,naming=mname),
+                         CharNGramFeatureFunction(3,naming=mname),
                          EmbeddingFeatureFunction(bpe_embeddings_file,
                                                   preprocessors=[bpe_transformer],
                                                   naming=mname)

@@ -1,5 +1,5 @@
 import json
-
+import random
 import torch
 import torch.nn.functional as F
 from sklearn.utils import shuffle
@@ -105,13 +105,22 @@ def train(model, fs, batch_size, lr, epochs,dev=None, clip=None, early_stopping=
 
 
 
-def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None, clip=None, early_stopping=None,l2=1e-5,lr_schedule=None):
+def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None,
+             clip=None, early_stopping=None, l2=1e-5, lr_schedule=None,
+             batches_per_epoch=None):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2)
 
+    print(training_datasets)
+    print(len(training_datasets))
+    print([len(ds[0]) for ds in training_datasets])
+    print(sum([len(ds[0]) for ds in training_datasets]))
     if dev is not None:
         dev_data,dev_labels = dev
 
-
+    if batches_per_epoch is None:
+        batches_per_epoch = sum([len(dataset[0]) for dataset
+                                 in training_datasets]) // batch_size
+    print("Batches per epoch:", batches_per_epoch)
     batches = []
 
     for training_dataset in training_datasets:
@@ -123,29 +132,32 @@ def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None, clip=Non
     for epoch in tqdm(range(epochs)):
         epoch_loss = 0
         epoch_data = 0
-
-        for idx,batcher in enumerate(zip(*batches)):
-            dataset_id = idx%len(training_datasets)
+        for b in range(batches_per_epoch):
+            task_id = random.choice(range(len(training_datasets)))
+            batcher = batches[task_id]
+            # for idx,batcher in enumerate(zip(*batches)):
+            dataset_id = task_id  # %len(training_datasets)
             data,labels = training_datasets[dataset_id]
 
-            for batch, size, start, end in batcher:
-                d,gold = prepare_with_labels(batch,labels[start:end])
+            batch, size, start, end = batcher.next_loop()
+            # for batch, size, start, end in batcher:
+            d,gold = prepare_with_labels(batch,labels[start:end])
 
-                model.train()
-                optimizer.zero_grad()
-                logits_list = model(d)
+            model.train()
+            optimizer.zero_grad()
+            logits_list = model(d)
 
-                logits = logits_list[dataset_id]
-                loss = F.cross_entropy(logits, gold)
-                loss.backward()
+            logits = logits_list[dataset_id]
+            loss = F.cross_entropy(logits, gold)
+            loss.backward()
 
-                epoch_loss += loss.cpu()
-                epoch_data += size
+            epoch_loss += loss.cpu()
+            epoch_data += size
 
-                if clip is not None:
-                    torch.nn.utils.clip_grad_norm(model.parameters(), clip)
+            if clip is not None:
+                torch.nn.utils.clip_grad_norm(model.parameters(), clip)
 
-                optimizer.step()
+            optimizer.step()
 
         if lr_schedule is not None:
             optimizer = lr_schedule(optimizer,epoch)

@@ -17,6 +17,11 @@ class Batcher():
         if isinstance(self.data,coo_matrix):
             self.data = self.data.tocsr()
 
+    def next_loop(self):
+        if self.pointer == splen(self.data):
+            self.pointer = 0
+        return self.__next__()
+
     def __next__(self):
         if self.pointer == splen(self.data):
             self.pointer = 0
@@ -25,7 +30,7 @@ class Batcher():
         next = min(splen(self.data),self.pointer+self.size)
         to_return = self.data[self.pointer : next]
 
-        start,end = self.pointer,next
+        start, end = self.pointer, next
 
         self.pointer = next
 

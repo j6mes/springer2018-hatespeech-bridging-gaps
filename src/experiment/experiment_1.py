@@ -83,12 +83,13 @@ if __name__ == "__main__":
     davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df,name="davidson_test")
     davidson_te.read()
 
-    features = Features([UnigramFeatureFunction(naming=mname),
-                         BigramFeatureFunction(naming=mname),
-                         CharNGramFeatureFunction(1,naming=mname),
-                         CharNGramFeatureFunction(2,naming=mname),
-                         CharNGramFeatureFunction(3,naming=mname)
-                         ])
+    features = Features([
+        # UnigramFeatureFunction(naming=mname),
+        # BigramFeatureFunction(naming=mname),
+        CharNGramFeatureFunction(1,naming=mname),
+        # CharNGramFeatureFunction(2,naming=mname),
+        # CharNGramFeatureFunction(3,naming=mname)
+                             ])
 
     primary_train_fs, aux_train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_tr, waseem_de_composite, davidson_te)
 
