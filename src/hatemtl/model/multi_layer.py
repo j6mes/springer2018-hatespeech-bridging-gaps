@@ -1,44 +1,69 @@
 from torch import nn
 
+
 class MLP(nn.Module):
 
-    def __init__(self,input_dim,hidden_dim,output_dim):
+    def __init__(self, input_dim, hidden_dims, output_dim):
         super(MLP, self).__init__()
-        self.fc1 = nn.Linear(input_dim,hidden_dim)
+        if type(hidden_dims) == int:
+            print("Warning: you passed a single integer ({}) as argument "
+                  "hidden_dims, but a list of integers specifying dimensions"
+                  "for all hidden layers is expected. The model will now have"
+                  "a single hidden layer with the dimensionality you "
+                  "specified.".format(hidden_dims))
+            hidden_dims = [hidden_dims]
+        self.dimensionalities = [input_dim] + hidden_dims
+        i = 0
+        self.hidden = []
+        for i in range(len(hidden_dims)):
+            self.hidden.append(nn.Linear(self.dimensionalities[i],
+                                         self.dimensionalities[i + 1]))
+        # self.fc1 = nn.Linear(input_dim,hidden_dim)
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.2)
-        self.fc2 = nn.Linear(hidden_dim,output_dim)
+        self.fc2 = nn.Linear(self.dimensionalities[i + 1], output_dim)
 
-        nn.init.xavier_normal(self.fc1.weight)
+        for layer in self.hidden:
+            nn.init.xavier_normal(layer.weight)
         nn.init.xavier_normal(self.fc2.weight)
 
     def forward(self, x):
-        out = self.fc1(x)
-        out = self.tanh(out)
-        out = self.dropout(out)
-        out = self.fc2(out)
-        return out
-
-
+        h = x
+        for layer in self.hidden:
+            h = self.dropout(self.tanh(layer(h)))
+        return self.fc2(h)
 
 
 class MTMLP(nn.Module):
 
-    def __init__(self, input_dim, hidden_dim, output_dim_a, output_dim_b):
+    def __init__(self, input_dim, hidden_dims, output_dim_a, output_dim_b):
         super(MTMLP, self).__init__()
-        self.fc1 = nn.Linear(input_dim,hidden_dim)
+        if type(hidden_dims) == int:
+            print("Warning: you passed a single integer ({}) as argument "
+                  "hidden_dims, but a list of integers specifying dimensions"
+                  "for all hidden layers is expected. The model will now have"
+                  "a single hidden layer with the dimensionality you "
+                  "specified.".format(hidden_dims))
+            hidden_dims = [hidden_dims]
+        self.dimensionalities = [input_dim] + hidden_dims
+        i = 0
+        self.hidden = []
+        for i in range(len(hidden_dims)):
+            self.hidden.append(nn.Linear(self.dimensionalities[i],
+                                         self.dimensionalities[i + 1]))
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.2)
-        self.fc2a = nn.Linear(hidden_dim,output_dim_a)
-        self.fc2b = nn.Linear(hidden_dim,output_dim_b)
+        self.fc2a = nn.Linear(self.dimensionalities[i + 1], output_dim_a)
+        self.fc2b = nn.Linear(self.dimensionalities[i + 1], output_dim_b)
 
-        nn.init.xavier_normal(self.fc1.weight)
+        for layer in self.hidden:
+            nn.init.xavier_normal(layer.weight)
         nn.init.xavier_normal(self.fc2a.weight)
         nn.init.xavier_normal(self.fc2b.weight)
 
     def forward(self, x):
-        h = self.fc1(x)
-        h = self.tanh(h)
-        h = self.dropout(h)
+        h = x
+        for layer in self.hidden:
+            h = self.dropout(self.tanh(layer(h)))
         ret = (self.fc2a(h),self.fc2b(h))
         return ret

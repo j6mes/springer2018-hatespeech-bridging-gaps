@@ -101,7 +101,8 @@ if __name__ == "__main__":
     train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson_te)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
-    model = MLP(train_fs[0].shape[1],20,3)
+    model = MLP(train_fs[0].shape[1],[50,150,50],3)
+    print(model.hidden, model.fc2)
 
     if gpu():
         model.cuda()
