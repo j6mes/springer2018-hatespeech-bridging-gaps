@@ -117,17 +117,19 @@ def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None,
     if dev is not None:
         dev_data,dev_labels = dev
 
-    if batches_per_epoch is None:
-        batches_per_epoch = sum([len(dataset[0]) for dataset
-                                 in training_datasets]) // batch_size
-    print("Batches per epoch:", batches_per_epoch)
     batches = []
-
     for training_dataset in training_datasets:
         data,labels = training_dataset
         shuffle(data,labels)
         batcher = Batcher(data, batch_size)
         batches.append(batcher)
+
+
+    if batches_per_epoch is None:
+        batches_per_epoch = sum([batch.estimate_batches() for batch in batches])
+        print("Batches per epoch:", batches_per_epoch)
+
+
 
     for epoch in tqdm(range(epochs)):
         epoch_loss = 0
@@ -179,9 +181,9 @@ def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None,
 
 
 
-def print_evaluation(model,data,ls,log=None):
+def print_evaluation(model,data,ls,log=None,predict_method=predict):
     features,actual = data
-    predictions = predict(model, features, 500).data.numpy().reshape(-1).tolist()
+    predictions = predict_method(model, features, 500).data.numpy().reshape(-1).tolist()
 
     labels = [ls.idx[i] for i, _ in enumerate(ls.idx)]
 

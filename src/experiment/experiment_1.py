@@ -5,7 +5,7 @@ from common.dataset.reader import CSVReader, JSONLineReader
 from common.features.feature_function import Features
 from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
-from common.training.run import train, print_evaluation, exp_lr_scheduler, train_mt
+from common.training.run import train, print_evaluation, exp_lr_scheduler, train_mt, predict_mt
 from common.util.random import SimpleRandom
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
@@ -111,5 +111,5 @@ if __name__ == "__main__":
     if not os.path.exists("logs/experiment1"):
         os.makedirs("logs/experiment1")
 
-    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/experiment1/dev.jsonl")
-    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment1/test.jsonl")
+    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/experiment1/dev.jsonl",predict_method=lambda a,b,c: predict_mt(a,b,c,0))
+    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment1/test.jsonl",predict_method=lambda a,b,c: predict_mt(a,b,c,0))

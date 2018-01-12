@@ -17,6 +17,9 @@ class Batcher():
         if isinstance(self.data,coo_matrix):
             self.data = self.data.tocsr()
 
+    def estimate_batches(self):
+        return splen(self.data)//self.size
+
     def next_loop(self):
         if self.pointer == splen(self.data):
             self.pointer = 0

@@ -51,6 +51,10 @@ class MTMLP(nn.Module):
         for i in range(len(hidden_dims)):
             self.hidden.append(nn.Linear(self.dimensionalities[i],
                                          self.dimensionalities[i + 1]))
+
+            #self.register_parameter("hidden_{0}".format(i), self.hidden[-1])
+
+
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.2)
         self.fc2a = nn.Linear(self.dimensionalities[i + 1], output_dim_a)
@@ -58,6 +62,7 @@ class MTMLP(nn.Module):
 
         for layer in self.hidden:
             nn.init.xavier_normal(layer.weight)
+
         nn.init.xavier_normal(self.fc2a.weight)
         nn.init.xavier_normal(self.fc2b.weight)
 
