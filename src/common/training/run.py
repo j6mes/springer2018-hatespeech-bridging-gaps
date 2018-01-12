@@ -110,10 +110,7 @@ def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None,
              batches_per_epoch=None):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2)
 
-    print(training_datasets)
-    print(len(training_datasets))
-    print([len(ds[0]) for ds in training_datasets])
-    print(sum([len(ds[0]) for ds in training_datasets]))
+
     if dev is not None:
         dev_data,dev_labels = dev
 
@@ -168,7 +165,7 @@ def train_mt(model, training_datasets, batch_size, lr, epochs,dev=None,
 
         #print("Epoch Train Accuracy {0}".format(evaluate(model, data, labels, batch_size)))
         if dev is not None:
-            acc = evaluate_mt(model,dev_data,dev_labels,batch_size,dataset_id)
+            acc = evaluate_mt(model,dev_data,dev_labels,batch_size,0)
             print("Epoch Dev Accuracy {0}".format(acc))
 
             if early_stopping is not None and early_stopping(model,acc):

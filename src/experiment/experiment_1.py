@@ -84,11 +84,11 @@ if __name__ == "__main__":
     davidson_te.read()
 
     features = Features([
-        # UnigramFeatureFunction(naming=mname),
-        # BigramFeatureFunction(naming=mname),
+        UnigramFeatureFunction(naming=mname),
+        BigramFeatureFunction(naming=mname),
         CharNGramFeatureFunction(1,naming=mname),
-        # CharNGramFeatureFunction(2,naming=mname),
-        # CharNGramFeatureFunction(3,naming=mname)
+        CharNGramFeatureFunction(2,naming=mname),
+        CharNGramFeatureFunction(3,naming=mname)
                              ])
 
     primary_train_fs, aux_train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_tr, waseem_de_composite, davidson_te)
@@ -112,4 +112,4 @@ if __name__ == "__main__":
         os.makedirs("logs/experiment1")
 
     print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/experiment1/dev.jsonl",predict_method=lambda a,b,c: predict_mt(a,b,c,0))
-    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment1/test.jsonl",predict_method=lambda a,b,c: predict_mt(a,b,c,0))
+    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment1/test.jsonl",predict_method=lambda a,b,c: predict_mt(a,b,c,1))
