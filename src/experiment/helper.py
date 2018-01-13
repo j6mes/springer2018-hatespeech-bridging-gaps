@@ -17,7 +17,7 @@ def is_large_model():
 
 def get_model_shape():
     if is_embedding_model() or is_large_model():
-        return [50,150,50]
+        return [50,130,20]
     else:
         return [20]
 

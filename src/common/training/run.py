@@ -197,3 +197,4 @@ def print_evaluation(model,data,ls,log=None,predict_method=predict):
         for a,p in data:
             f.write(json.dumps({"actual": a, "predicted": p}) + "\n")
         f.close()
+

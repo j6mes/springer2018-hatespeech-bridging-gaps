@@ -79,8 +79,6 @@ class MTMLP(nn.Module):
             self.hidden.append(nn.Linear(self.dimensionalities[i],
                                          self.dimensionalities[i + 1]))
 
-            #self.register_parameter("hidden_{0}".format(i), self.hidden[-1])
-
 
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.2)

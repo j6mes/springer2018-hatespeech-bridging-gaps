@@ -7,6 +7,7 @@ from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler, train_mt, predict_mt
 from common.util.random import SimpleRandom
+from experiment.helper import get_feature_functions, get_model_shape
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
@@ -83,20 +84,13 @@ if __name__ == "__main__":
     davidson_te = DataSet(os.path.join("data","davidson.te.csv"),reader=csvreader,formatter=df,name="davidson_test")
     davidson_te.read()
 
-    features = Features([
-        UnigramFeatureFunction(naming=mname),
-        BigramFeatureFunction(naming=mname),
-        CharNGramFeatureFunction(1,naming=mname),
-        CharNGramFeatureFunction(2,naming=mname),
-        CharNGramFeatureFunction(3,naming=mname)
-                             ])
-
+    features = Features(get_feature_functions(mname))
     primary_train_fs, aux_train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, davidson_tr, waseem_de_composite, davidson_te)
 
     print("Number of features in primary: {0}".format(primary_train_fs[0].shape[1]))
     print("Number of features aux (=): {0}".format(aux_train_fs[0].shape[1]))
 
-    model = MTMLP(primary_train_fs[0].shape[1],20,3,3)
+    model = MTMLP(primary_train_fs[0].shape[1],get_model_shape(),3,3)
 
     if gpu():
         model.cuda()
