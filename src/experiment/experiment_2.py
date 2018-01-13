@@ -30,7 +30,7 @@ def model_exists(mname):
 
 if __name__ == "__main__":
     SimpleRandom.set_seeds()
-    mname = "expt1"
+    mname = "expt2"
 
     sexism_file_tr = os.path.join("data","waseem_s.tr.json")
     racism_file_tr = os.path.join("data","waseem_r.tr.json")
@@ -42,10 +42,12 @@ if __name__ == "__main__":
     neither_file_de = os.path.join("data","waseem_n.dv.json")
     waseem_hovy_de = os.path.join("data","amateur_expert.dv.json")
 
+
     sexism_file_te = os.path.join("data","waseem_s.te.json")
     racism_file_te = os.path.join("data","waseem_r.te.json")
     neither_file_te = os.path.join("data","waseem_n.te.json")
     waseem_hovy_te = os.path.join("data","amateur_expert.te.json")
+
 
     csvreader = CSVReader(encoding="ISO-8859-1")
     jlr = JSONLineReader()
@@ -67,6 +69,7 @@ if __name__ == "__main__":
         DataSet(file=neither_file_de, reader=jlr, formatter=formatter,name=None),
         DataSet(file=waseem_hovy_de, reader=jlr, formatter=formatter2,name=None)
     ]
+
 
     datasets_te = [
         DataSet(file=sexism_file_te, reader=jlr, formatter=formatter,name=None),
@@ -102,7 +105,7 @@ if __name__ == "__main__":
     davidson_te.read()
 
     features = Features(get_feature_functions(mname))
-    primary_train_fs, aux_train_fs, dev_fs, test_fs_primary, test_fs_aux = features.load(waseem_tr_composite, davidson_tr, waseem_de_composite, waseem_te_composite, davidson_te)
+    primary_train_fs, aux_train_fs, dev_fs, test_fs_primary, test_fs_aux = features.load(davidson_tr,waseem_tr_composite, davidson_dv, davidson_te, waseem_te_composite)
 
     print("Number of features in primary: {0}".format(primary_train_fs[0].shape[1]))
     print("Number of features aux (=): {0}".format(aux_train_fs[0].shape[1]))
@@ -118,6 +121,9 @@ if __name__ == "__main__":
         train_mt(model, (primary_train_fs,aux_train_fs), 50, 1e-3, 60, dev=dev_fs, early_stopping=EarlyStopping(mname),
               lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
+
+
+
 
 
     create_log_dir(mname)
