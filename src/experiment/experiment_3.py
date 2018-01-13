@@ -91,58 +91,21 @@ if __name__ == "__main__":
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
 
-    results = []
-    for shape in [
-        [20],
-        [50],
-        [80],
-        [100],
-        [20,20],
-        [20,50],
-        [20,80],
-        [20,100],
-        [50, 20],
-        [50, 50],
-        [50, 80],
-        [50, 100],
-        [20, 20, 20],
-        [20, 50, 20],
-        [20, 80, 20],
-        [20, 80, 50],
-        [20, 100, 20],
-        [20, 100, 50],
-        [20, 100, 80],
-    ]:
+    model = MLP(train_fs[0].shape[1],get_model_shape(),3)
 
-        print("Model size")
-        print(get_model_shape())
 
-        model = MLP(train_fs[0].shape[1],get_model_shape(),3)
+    if gpu():
+        model.cuda()
+
+    if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
+        model.load_state_dict(torch.load("models/{0}.model".format(mname)))
+    else:
+        train(model, train_fs, 50, 1e-3, 60, dev=dev_fs, early_stopping=EarlyStopping(mname),
+              lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
+        torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
 
 
-        if gpu():
-            model.cuda()
-
-        if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
-            model.load_state_dict(torch.load("models/{0}.model".format(mname)))
-        else:
-            train(model, train_fs, 50, 1e-4, 60, dev=dev_fs, early_stopping=EarlyStopping(mname),
-                  lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
-            torch.save(model.state_dict(), "models/{0}.model".format(mname))
-
-
-
-        create_log_dir(mname)
-        print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/{0}/dev.jsonl".format(mname))
-        print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/{0}/test.jsonl".format(mname))
-
-        print()
-        print()
-        print()
-        print()
-        print()
-        print()
-        print()
-        print()
-        print()
+    create_log_dir(mname)
+    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/{0}/dev.jsonl".format(mname))
+    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/{0}/test.jsonl".format(mname))
