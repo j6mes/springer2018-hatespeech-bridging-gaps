@@ -127,5 +127,5 @@ if __name__ == "__main__":
 
 
     create_log_dir(mname)
-    print_evaluation(model,test_fs_primary, WaseemLabelSchema(),log="logs/{0}/primary.jsonl".format(mname),predict_method=lambda a,b,c: predict_mt(a,b,c,0))
-    print_evaluation(model,test_fs_aux, WaseemLabelSchema(),log="logs/{0}/aux.jsonl".format(mname),predict_method=lambda a,b,c: predict_mt(a,b,c,1))
+    print_evaluation(model,test_fs_primary, DavidsonLabelSchema(),log="logs/{0}/primary.jsonl".format(mname),predict_method=lambda a,b,c: predict_mt(a,b,c,0))
+    print_evaluation(model,test_fs_aux, DavidsonLabelSchema(),log="logs/{0}/aux.jsonl".format(mname),predict_method=lambda a,b,c: predict_mt(a,b,c,1))
