@@ -8,6 +8,6 @@ def is_gpu():
 
 def gpu():
     if is_gpu():
-        torch.cuda.set_device(os.getenv("CUDA_DEVICE", 0))
+        torch.cuda.set_device(int(os.getenv("CUDA_DEVICE", 0)))
         return True
     return False
