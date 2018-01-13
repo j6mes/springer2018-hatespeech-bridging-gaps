@@ -34,11 +34,11 @@ def get_feature_functions(mname, BASE_DIR="."):
         bpe_embeddings_file = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.txt"
         bpe_transformer = BPETransformer(bpe_embeddings_file)
 
-        ffs.append([EmbeddingFeatureFunction(bpe_embeddings_file,
+        ffs.extend([EmbeddingFeatureFunction(bpe_embeddings_file,
                                                   preprocessors=[bpe_transformer],
                                                   naming=mname)])
     elif not is_embedding_model() or is_huge_model():
-        ffs.append([UnigramFeatureFunction(naming=mname),
+        ffs.extend([UnigramFeatureFunction(naming=mname),
              BigramFeatureFunction(naming=mname),
              CharNGramFeatureFunction(1,naming=mname),
              CharNGramFeatureFunction(2,naming=mname),
