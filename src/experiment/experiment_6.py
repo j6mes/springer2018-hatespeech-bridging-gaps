@@ -7,6 +7,7 @@ from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler
 from common.util.random import SimpleRandom
+from experiment.helper import get_feature_functions, create_log_dir, get_model_shape, is_embedding_model
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
@@ -28,7 +29,7 @@ def model_exists(mname):
 if __name__ == "__main__":
 
     SimpleRandom.set_seeds()
-    mname = "expt6"
+    mname = "expt6" + ("emb" if is_embedding_model() else "")
 
     sexism_file_tr = os.path.join("data","waseem_s.tr.json")
     racism_file_tr = os.path.join("data","waseem_r.tr.json")
@@ -88,17 +89,11 @@ if __name__ == "__main__":
         dataset.read()
         waseem_te_composite.add(dataset)
 
-    features = Features([UnigramFeatureFunction(naming=mname),
-                         BigramFeatureFunction(naming=mname),
-                         CharNGramFeatureFunction(1,naming=mname),
-                         CharNGramFeatureFunction(2,naming=mname),
-                         CharNGramFeatureFunction(3,naming=mname)
-                         ])
-
+    features = Features(get_feature_functions(mname))
     train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, waseem_te_composite)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
-    model = MLP(train_fs[0].shape[1],20,3)
+    model = MLP(train_fs[0].shape[1], get_model_shape(), 3)
 
     if gpu():
         model.cuda()
@@ -106,13 +101,10 @@ if __name__ == "__main__":
     if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
-        train(model, train_fs, 50, 1e-3, 30, dev=dev_fs, early_stopping=EarlyStopping(mname),
+        train(model, train_fs, 50, 1e-3, 60, dev=dev_fs, early_stopping=EarlyStopping(mname),
               lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
-
-    if not os.path.exists("logs/experiment6"):
-        os.makedirs("logs/experiment6")
-
-    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/experiment6/dev.jsonl")
-    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment6/test.jsonl")
+    create_log_dir(mname)
+    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/{0}/dev.jsonl".format(mname))
+    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/{0}/test.jsonl".format(mname))

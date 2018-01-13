@@ -1,5 +1,31 @@
 from torch import nn
 
+class ListModule(nn.Module):
+    def __init__(self, *args):
+        super(ListModule, self).__init__()
+        self.idx = 0
+        for module in args:
+            self.append(module)
+
+    def __getitem__(self, idx):
+        if idx < 0 or idx >= len(self._modules):
+            raise IndexError('index {} is out of range'.format(idx))
+        it = iter(self._modules.values())
+        for i in range(idx):
+            next(it)
+        return next(it)
+
+    def append(self,module):
+        self.add_module(str(self.idx), module)
+        self.idx += 1
+
+    def __iter__(self):
+        return iter(self._modules.values())
+
+    def __len__(self):
+        return len(self._modules)
+
+
 
 class MLP(nn.Module):
 
@@ -14,7 +40,8 @@ class MLP(nn.Module):
             hidden_dims = [hidden_dims]
         self.dimensionalities = [input_dim] + hidden_dims
         i = 0
-        self.hidden = []
+
+        self.hidden = ListModule()
         for i in range(len(hidden_dims)):
             self.hidden.append(nn.Linear(self.dimensionalities[i],
                                          self.dimensionalities[i + 1]))
@@ -47,7 +74,7 @@ class MTMLP(nn.Module):
             hidden_dims = [hidden_dims]
         self.dimensionalities = [input_dim] + hidden_dims
         i = 0
-        self.hidden = []
+        self.hidden = ListModule()
         for i in range(len(hidden_dims)):
             self.hidden.append(nn.Linear(self.dimensionalities[i],
                                          self.dimensionalities[i + 1]))

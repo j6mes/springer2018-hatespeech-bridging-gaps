@@ -8,6 +8,7 @@ from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler
 from common.util.random import SimpleRandom
 from common.util.bpe import BPETransformer
+from experiment.helper import get_feature_functions, get_model_shape, create_log_dir, is_embedding_model
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
@@ -31,9 +32,10 @@ def model_exists(mname):
         os.mkdir("models")
     return os.path.exists(os.path.join("models","{0}.model".format(mname)))
 
+
 if __name__ == "__main__":
     SimpleRandom.set_seeds()
-    mname = "expt3"
+    mname = "expt3" + ("emb" if is_embedding_model() else "")
 
     sexism_file_tr = os.path.join(DATA_DIR,"waseem_s.tr.json")
     racism_file_tr = os.path.join(DATA_DIR,"waseem_r.tr.json")
@@ -84,25 +86,13 @@ if __name__ == "__main__":
 
     davidson_te.read()
 
-    bpe_embeddings_vocab = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.vocab"
-    bpe_embeddings_file = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.txt"
-    bpe_transformer = BPETransformer(bpe_embeddings_file)
-
-    features = Features([UnigramFeatureFunction(naming=mname),
-                         BigramFeatureFunction(naming=mname),
-                         CharNGramFeatureFunction(1,naming=mname),
-                         CharNGramFeatureFunction(2,naming=mname),
-                         CharNGramFeatureFunction(3,naming=mname),
-                         EmbeddingFeatureFunction(bpe_embeddings_file,
-                                                  preprocessors=[bpe_transformer],
-                                                  naming=mname)
-                         ])
-
+    features = Features(get_feature_functions(mname))
     train_fs, dev_fs, test_fs = features.load(waseem_tr_composite, waseem_de_composite, davidson_te)
 
     print("Number of features: {0}".format(train_fs[0].shape[1]))
-    model = MLP(train_fs[0].shape[1],[50,150,50],3)
-    print(model.hidden, model.fc2)
+    model = MLP(train_fs[0].shape[1],get_model_shape(),3)
+
+
 
     if gpu():
         model.cuda()
@@ -110,13 +100,12 @@ if __name__ == "__main__":
     if model_exists(mname) and os.getenv("TRAIN").lower() not in ["y","1","t","yes"]:
         model.load_state_dict(torch.load("models/{0}.model".format(mname)))
     else:
-        train(model, train_fs, 50, 1e-3, 30, dev=dev_fs, early_stopping=EarlyStopping(mname),
+        train(model, train_fs, 50, 1e-3, 60, dev=dev_fs, early_stopping=EarlyStopping(mname),
               lr_schedule=lambda a, b: exp_lr_scheduler(a, b, 0.5, 5))
         torch.save(model.state_dict(), "models/{0}.model".format(mname))
 
 
-    if not os.path.exists("logs/experiment3"):
-        os.makedirs("logs/experiment3")
 
-    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/experiment3/dev.jsonl")
-    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/experiment3/test.jsonl")
+    create_log_dir(mname)
+    print_evaluation(model,dev_fs, WaseemLabelSchema(),log="logs/{0}/dev.jsonl".format(mname))
+    print_evaluation(model,test_fs, WaseemLabelSchema(),log="logs/{0}/test.jsonl".format(mname))
