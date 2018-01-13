@@ -8,6 +8,9 @@ from hatemtl.features.feature_function import EmbeddingFeatureFunction, UnigramF
 def is_embedding_model():
     return os.getenv("EMBEDDING","").lower() in ["y","1",1,"yes","t","true"]
 
+def is_huge_model():
+    return os.getenv("HUGE","").lower() in ["y","1",1,"yes","t","true"]
+
 
 def is_large_model():
     return os.getenv("LARGE","").lower() in ["y","1",1,"yes","t","true"]
@@ -24,21 +27,23 @@ def get_model_shape():
 
 
 def get_feature_functions(mname, BASE_DIR="."):
+
+    ffs = []
     if is_embedding_model():
         bpe_embeddings_vocab = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.vocab"
         bpe_embeddings_file = BASE_DIR + "/res/en.wiki.bpe.op3000.d300.w2v.txt"
         bpe_transformer = BPETransformer(bpe_embeddings_file)
 
-        ffs = [EmbeddingFeatureFunction(bpe_embeddings_file,
+        ffs.append([EmbeddingFeatureFunction(bpe_embeddings_file,
                                                   preprocessors=[bpe_transformer],
-                                                  naming=mname)]
-    else:
-        ffs = [UnigramFeatureFunction(naming=mname),
+                                                  naming=mname)])
+    elif not is_embedding_model() or is_huge_model():
+        ffs.append([UnigramFeatureFunction(naming=mname),
              BigramFeatureFunction(naming=mname),
              CharNGramFeatureFunction(1,naming=mname),
              CharNGramFeatureFunction(2,naming=mname),
              CharNGramFeatureFunction(3,naming=mname)
-             ]
+             ])
     return ffs
 
 
