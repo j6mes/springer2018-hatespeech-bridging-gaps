@@ -7,7 +7,7 @@ from common.training.early_stopping import EarlyStopping
 from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler
 from common.util.random import SimpleRandom
-from experiment.helper import get_feature_functions, get_model_shape, create_log_dir, is_embedding_model
+from experiment.helper import get_feature_functions, get_model_shape, create_log_dir, is_embedding_model, is_large_model
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
@@ -29,7 +29,7 @@ def model_exists(mname):
 if __name__ == "__main__":
 
     SimpleRandom.set_seeds()
-    mname = "expt7" + ("emb" if is_embedding_model() else "")
+    mname = "expt7" + ("emb" if is_embedding_model() else "") + ("large" if is_large_model() else "")
 
     csvreader = CSVReader(encoding="ISO-8859-1")
     df = DavidsonFormatter(DavidsonToZLabelSchema(),preprocessing=pp)

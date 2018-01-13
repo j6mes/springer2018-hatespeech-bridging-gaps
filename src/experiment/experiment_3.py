@@ -8,7 +8,7 @@ from common.training.options import gpu
 from common.training.run import train, print_evaluation, exp_lr_scheduler
 from common.util.random import SimpleRandom
 from common.util.bpe import BPETransformer
-from experiment.helper import get_feature_functions, get_model_shape, create_log_dir, is_embedding_model
+from experiment.helper import get_feature_functions, get_model_shape, create_log_dir, is_embedding_model, is_large_model
 
 from hatemtl.features.label_schema import WaseemLabelSchema, WaseemHovyLabelSchema, DavidsonLabelSchema, \
     DavidsonToZLabelSchema
@@ -35,7 +35,7 @@ def model_exists(mname):
 
 if __name__ == "__main__":
     SimpleRandom.set_seeds()
-    mname = "expt3" + ("emb" if is_embedding_model() else "")
+    mname = "expt3" + ("emb" if is_embedding_model() else "") + ("large" if is_large_model() else "")
 
     sexism_file_tr = os.path.join(DATA_DIR,"waseem_s.tr.json")
     racism_file_tr = os.path.join(DATA_DIR,"waseem_r.tr.json")

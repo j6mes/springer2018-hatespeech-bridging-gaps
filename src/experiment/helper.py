@@ -9,9 +9,14 @@ def is_embedding_model():
     return os.getenv("EMBEDDING","").lower() in ["y","1",1,"yes","t","true"]
 
 
+def is_large_model():
+    return os.getenv("LARGE","").lower() in ["y","1",1,"yes","t","true"]
+
+
+
 
 def get_model_shape():
-    if is_embedding_model():
+    if is_embedding_model() or is_large_model():
         return [50,150,50]
     else:
         return [20]
