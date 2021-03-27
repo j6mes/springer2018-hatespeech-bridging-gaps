@@ -1,4 +1,4 @@
-GPU=1 CUDA_DEVICE=2 PYTHONPATH=src TRAIN=1 python src/experiment/experiment_1.py  > expt3.log
+GPU=1 CUDA_DEVICE=2 PYTHONPATH=src TRAIN=1 python src/experiment/experiment_1.py  > expt1.log
 EMBEDDING=1 GPU=1 CUDA_DEVICE=2 PYTHONPATH=src TRAIN=1 python src/experiment/experiment_1.py  > expt1emb.log
 EMBEDDING=1 LARGE=1 GPU=1 CUDA_DEVICE=2 PYTHONPATH=src TRAIN=1 python src/experiment/experiment_1.py  > expt1large.log
 
